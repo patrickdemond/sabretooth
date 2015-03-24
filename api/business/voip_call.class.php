@@ -124,8 +124,8 @@ class voip_call extends \cenozo\base_object
 
     // play sound in local channel
     if( !$this->manager->originate(
-      'Local/playback@default',  // channel
-      'default',                 // context
+      'Local/playback@cenozo',   // channel
+      'cenozo',                  // context
       'playbackspy',             // extension
       1,                         // priority
       false,                     // application
@@ -148,8 +148,8 @@ class voip_call extends \cenozo\base_object
 
       // play sound in bridged channel
       if( !$this->manager->originate(
-        'Local/playback@default',  // channel
-        'default',                 // context
+        'Local/playback@cenozo',   // channel
+        'cenozo',                  // context
         'playbackspy',             // extension
         1,                         // priority
         false,                     // application

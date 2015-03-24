@@ -24,6 +24,7 @@ class self_shortcuts extends \cenozo\ui\widget\self_shortcuts
   {
     parent::setup();
     
+    $voip_manager_class_name = lib::get_class_name( 'business\voip_manager' );
     $setting_manager = lib::create( 'business\setting_manager' );
     $survey_manager = lib::create( 'business\survey_manager' );
     $voip_manager = lib::create( 'business\voip_manager' );
@@ -33,22 +34,8 @@ class self_shortcuts extends \cenozo\ui\widget\self_shortcuts
     $voip_enabled = $setting_manager->get_setting( 'voip', 'enabled' );
     $is_operator = 'operator' == $session->get_role()->name;
     
-    // get the xor key and make sure it is at least as long as the password
-    $xor_key = $setting_manager->get_setting( 'voip', 'xor_key' );
-    $password = $_SERVER['PHP_AUTH_PW'];
-
-    // avoid infinite loops by using a counter
-    $counter = 0;
-    while( strlen( $xor_key ) < strlen( $password ) )
-    {
-      $xor_key .= $xor_key;
-      if( 1000 < $counter++ ) break;
-    }
-    
-    $this->set_variable( 'webphone_parameters', sprintf(
-      'username=%s&password=%s',
-      $_SERVER['PHP_AUTH_USER'],
-      base64_encode( $password ^ $xor_key ) ) );
+    $peer = $voip_manager::get_peer();
+    $this->set_variable( 'webphone_parameters', sprintf( 'id=%s', $peer ) );
     $this->set_variable( 'webphone',
       $voip_enabled && !$voip_manager->get_sip_enabled() );
     $this->set_variable( 'dialpad', !is_null( $voip_manager->get_call() ) );

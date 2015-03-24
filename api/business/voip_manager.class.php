@@ -53,7 +53,7 @@ class voip_manager extends \cenozo\singleton
           'Unable to connect to the Asterisk server.', __METHOD__ );
 
       // get the current SIP info
-      $peer = lib::create( 'business\session' )->get_user()->name;
+      $peer = static::get_peer();
       $s8_event = $this->manager->getSipPeer( $peer );
       
       if( !is_null( $s8_event ) &&
@@ -109,9 +109,7 @@ class voip_manager extends \cenozo\singleton
     if( !$this->enabled ) return NULL;
     if( is_null( $this->call_list ) ) $this->rebuild_call_list();
 
-    $peer = is_null( $db_user )
-          ? lib::create( 'business\session' )->get_user()->name
-          : $db_user->name;
+    $peer = static::get_peer( $db_user );
 
     // build the call list
     $calls = array();
@@ -160,9 +158,9 @@ class voip_manager extends \cenozo\singleton
         'Unable to connect call since you already appear to be in a call.', __METHOD__ );
 
     // originate call (careful, the online API has the arguments in the wrong order)
-    $peer = lib::create( 'business\session' )->get_user()->name;
+    $peer = static::get_peer();
     $channel = 'SIP/'.$peer;
-    $context = 'users';
+    $context = 'from-internal';
     $extension = $this->prefix.$digits;
     $priority = 1;
     if( !$this->manager->originate( $channel, $context, $extension, $priority ) )
@@ -182,12 +180,12 @@ class voip_manager extends \cenozo\singleton
    */
   public function spy( $voip_call )
   {
-    $peer = lib::create( 'business\session' )->get_user()->name;
+    $peer = static::get_peer();
     $channel = 'SIP/'.$peer;
     // play sound in local channel
     if( !$this->manager->originate(
       $channel,             // channel
-      'default',            // context
+      'cenozo',             // context
       'chanspy',            // extension
       1,                    // priority
       false,                // application
@@ -217,9 +215,10 @@ class voip_manager extends \cenozo\singleton
     if( !$this->enabled || is_null( $db_user ) ) return;
     
     // there is no way to send a sip prune command to asterisk using AMI so we need to use the CLI
+    $peer = static::get_peer( $db_user );
     $output = array();
     $return_value = 0;
-    exec( 'asterisk -rx "sip prune realtime peer '.$db_user->name.'"', $output, $return_value );
+    exec( sprintf( 'asterisk -rx "sip prune realtime peer %s"', $peer ), $output, $return_value );
     if( 0 != $return_value ) log::err( $output[0] );
   }
 
@@ -252,6 +251,12 @@ class voip_manager extends \cenozo\singleton
    * @access public
    */
   public function get_prefix() { return $this->prefix; }
+
+  public static function get_peer( $db_user = NULL )
+  {
+    return 10000000 + ( is_null( $db_user ) ?
+      lib::create( 'business\session' )->get_user()->id : $db_user->id );
+  }
 
   /**
    * The asterisk manager object
