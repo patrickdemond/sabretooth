@@ -58,6 +58,16 @@ class session extends \cenozo\business\session
   }
 
   /**
+   * Performs all shutdown actions
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @access public
+   */
+  public function shutdown()
+  {
+    lib::create( 'business\voip_manager' )->shutdown();
+  }
+
+  /**
    * Get the survey database.
    * 
    * @author Patrick Emond <emondpd@mcmaster.ca>

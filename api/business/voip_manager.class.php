@@ -76,6 +76,16 @@ class voip_manager extends \cenozo\singleton
   }
   
   /**
+   * Performs all shutdown actions
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @access public
+   */
+  public function shutdown()
+  {
+    if( $this->manager ) $this->manager->logoff();
+  }
+
+  /**
    * Reads the list of active calls from the server.
    * 
    * @author Patrick Emond <emondpd@mcmaster.ca>
