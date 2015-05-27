@@ -394,6 +394,9 @@ class participant_status_report extends \cenozo\ui\pull\base_report
     $modifier->where( 'interview.id', '=', NULL );
     $this->set_category_totals( $sub_cat, $extra_sql, $modifier );
 
+    /* NOTE: This is dissabled at Kim's request since there is a "sourcing required" state which
+             is being used to track this instead of the max failed calls mechanism
+    
     // has an incomplete interview
     // failed call count >= max failed calls
     $sub_cat = 'Sourcing required';
@@ -412,6 +415,7 @@ class participant_status_report extends \cenozo\ui\pull\base_report
     $modifier->where( 'interview.completed', '=', false );
     $modifier->where( 'interview_failed_call_count.total', '>=', $max_failed_calls );
     $this->set_category_totals( $sub_cat, $extra_sql, $modifier );
+    */
 
     // has an incomplete interview
     // last phone call status
