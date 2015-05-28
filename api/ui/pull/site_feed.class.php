@@ -51,10 +51,6 @@ class site_feed extends \cenozo\ui\pull\base_feed
     $start_datetime_obj = util::get_datetime_object( $this->start_datetime );
     $end_datetime_obj   = util::get_datetime_object( $this->end_datetime );
     
-    // since db_site may not be the same site as the session, convert to the correct timzeone
-    $start_datetime_obj->setTimezone( util::get_timezone_object( false, $db_site ) );
-    $end_datetime_obj->setTimezone( util::get_timezone_object( false, $db_site ) );
-
     $days = array();
     $current_datetime_obj = clone $start_datetime_obj;
     while( !$current_datetime_obj->diff( $end_datetime_obj )->invert )
@@ -157,8 +153,12 @@ class site_feed extends \cenozo\ui\pull\base_feed
 
       $appointment_datetime_obj = util::get_datetime_object( $db_appointment->datetime );
 
+      /** NOTE: removed because it was incorrectly displaying slot times when showing another site's
+                calendar (mcmaster viewing dalhousie's site calendar, for instance)
+          ALSO SEE BELOW
       // since db_site may not be the same site as the session, convert to the correct timzeone
       $appointment_datetime_obj->setTimezone( util::get_timezone_object( false, $db_site ) );
+      */
 
       $diffs = &$days[ $appointment_datetime_obj->format( 'Y-m-d' ) ]['diffs'];
 
@@ -211,8 +211,12 @@ class site_feed extends \cenozo\ui\pull\base_feed
       {
         if( $number == $available ) continue;
 
+        /** NOTE: removed because it was incorrectly displaying slot times when showing another site's
+                  calendar (mcmaster viewing dalhousie's site calendar, for instance)
+            ALSO SEE ABOVEyy
         // convert the time to the user's site's timezone
         $time -= ( 100 * $site_offset );
+        */
 
         $minutes = $time % 100;
         $hours = ( $time - $minutes ) / 100;
