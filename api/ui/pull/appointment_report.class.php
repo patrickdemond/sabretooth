@@ -36,7 +36,9 @@ class appointment_report extends \cenozo\ui\pull\base_report
    */
   protected function build()
   {
-    $db_site = lib::create( 'business\session' )->get_site();
+    $session = lib::create( 'business\session' );
+    $db_site = $session->get_site();
+    $db_service = $session->get_service();
     $date = $this->get_argument( 'date' );
    
     $this->add_title(
@@ -45,7 +47,7 @@ class appointment_report extends \cenozo\ui\pull\base_report
                util::get_formatted_date( $date ) ) );
 
     $contents = array();
-    $header = array( 'UID', 'Time', 'Type', 'Reached', 'Operator', 'Interview Completed' );
+    $header = array( 'UID', 'Language', 'Time', 'Type', 'Reached', 'Operator', 'Interview Completed' );
     
     $appointment_class_name = lib::get_class_name( 'database\appointment' );
     $appointment_mod = lib::create( 'database\modifier' );
@@ -65,8 +67,12 @@ class appointment_report extends \cenozo\ui\pull\base_report
                      $db_assignment->id == $db_interview->get_last_assignment()->id;
       }
 
+      $db_participant = $db_appointment->get_participant();
+      $db_language = $db_participant->get_language();
+      if( is_null( $db_language ) ) $db_language = $db_service->get_language();
       $contents[] = array(
-        $db_appointment->get_participant()->uid,
+        $db_participant->uid,
+        $db_language->name,
         util::get_formatted_time( $db_appointment->datetime, false ),
         $db_appointment->type,
         $db_appointment->reached ? 'Yes' : 'No',
