@@ -179,21 +179,6 @@ class voip_call extends \cenozo\base_object
  
     $filename = sprintf( '%s/%s', VOIP_MONITOR_PATH, $filename );
 
-    // make sure to not overwrite any existing recordings
-    if( file_exists( $filename.'-out.wav' ) )
-    {
-      $base_filename = str_replace( '-01', '', $filename );
-      $index = 1;
-      do
-      {
-        $index++;
-        $filename = sprintf( '%s-%s',
-                             $base_filename,
-                             str_pad( $index, 2, '0', STR_PAD_LEFT ) );
-      }
-      while( file_exists( $filename.'-out.wav' ) );
-    }
-
     if( false == $this->manager->monitor( $this->get_channel(), $filename, 'wav' ) )
       throw lib::create( 'exception\voip', $this->manager->getLastError(), __METHOD__ );
   }

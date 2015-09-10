@@ -111,9 +111,6 @@ class interview extends \cenozo\database\has_note
     $this->completed = true;
     $this->save();
 
-    // update the recording list
-    $this->update_recording_list();
-
     // record the event (if one exists)
     $db_event_type = $this->get_qnaire()->get_completed_event_type();
     if( !is_null( $db_event_type ) )
@@ -248,7 +245,6 @@ class interview extends \cenozo\database\has_note
     // finally, update the record
     $this->completed = false;
     $this->save();
-    $this->update_recording_list();
 
     // remove completed events (if any exist)
     $db_event_type = $this->get_qnaire()->get_completed_event_type();
@@ -258,57 +254,6 @@ class interview extends \cenozo\database\has_note
       $event_mod->where( 'event_type_id', '=', $db_event_type->id );
       foreach( $this->get_participant()->get_event_list( $event_mod ) as $db_event )
         $db_event->delete();
-    }
-  }
-
-  /**
-   * Builds the recording list based on recording files found in the monitor path (if set)
-   * 
-   * @author Patrick Emond <emondpd@mcmaster.ca>
-   * @access protected
-   */
-  public function update_recording_list()
-  {
-    // make sure that all recordings on disk have a corresponding database record
-    if( is_dir( VOIP_MONITOR_PATH ) )
-    {
-      // create new recording record based on this interview
-      $db_recording = lib::create( 'database\recording' );
-      $db_recording->interview_id = $this->id;
-      $glob_search = sprintf( '%s/%s',
-                              VOIP_MONITOR_PATH,
-                              str_replace( '_0-01', '_*', $db_recording->get_filename() ) );
-
-      $values = '';
-      $first = true;
-      foreach( glob( $glob_search ) as $filename )
-      {
-        // remove the path from the filename
-        $parts = preg_split( '#/#', $filename );
-        if( 2 <= count( $parts ) )
-        {
-          // get the interview and assignment id from the filename
-          $parts = preg_split( '/[-_]/', end( $parts ) );
-          if( 3 <= count( $parts ) )
-          {
-            $assignment_id = 0 < $parts[1] ? $parts[1] : 'NULL';
-            $rank = intval( $parts[2] );
-            $values .= sprintf( '%s( %d, %s, %d )',
-                                $first ? '' : ', ',
-                                $this->id,
-                                $assignment_id,
-                                $rank );
-            $first = false;
-          }
-        }
-      }
-
-      if( !$first )
-      {
-        static::db()->execute( sprintf(
-          'INSERT IGNORE INTO recording ( interview_id, assignment_id, rank ) '.
-          'VALUES %s', $values ) );
-      }
     }
   }
 
