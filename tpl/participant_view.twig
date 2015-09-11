@@ -46,6 +46,15 @@
           }
         );
       } );
+
+      // proxy button
+      $( "#{{ widget.full }}__proxy" ).click( function() {
+        // force the proxy list to be loaded in the main slot
+        $.cookie( "proxying_participant", "{{ id }}" );
+        $.cookie( "proxying_token", "{{ next_proxy_token|default(0) }}" );
+        window.location.reload();
+        slot_load( 'main', 'participant', 'proxy', { id: {{ id }} } );
+      } );
     } );
   </script>
 {% endblock javascript %}

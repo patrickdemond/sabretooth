@@ -45,6 +45,10 @@ class survey_manager extends \cenozo\singleton
     {
       $db_participant = lib::create( 'database\participant', $_COOKIE['withdrawing_participant'] );
     }
+    else if( array_key_exists( 'proxying_participant', $_COOKIE ) )
+    {
+      $db_participant = lib::create( 'database\participant', $_COOKIE['proxying_participant'] );
+    }
     else if( 'operator' == $session->get_role()->name )
     {
       // must have an assignment
@@ -192,6 +196,18 @@ class survey_manager extends \cenozo\singleton
       }
 
       $this->process_withdraw( $db_participant );
+    }
+    else if( array_key_exists( 'proxying_participant', $_COOKIE ) )
+    {
+      // get the participant being proxyied
+      $db_participant = lib::create( 'database\participant', $_COOKIE['proxying_participant'] );
+      if( is_null( $db_participant ) )
+      {
+        log::warning( 'Tried to determine survey information for an invalid participant.' );
+        return false;
+      }
+
+      $this->process_proxy( $db_participant );
     }
     else // we're not running a special interview, so check for an assignment
     {
@@ -346,6 +362,69 @@ class survey_manager extends \cenozo\singleton
     {
       $withdraw_manager->process( $db_participant );
     }
+  }
+
+  /**
+   * Internal method to handle the proxy script
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @param database\participant $db_participant
+   * @access private
+   */
+  private function process_proxy( $db_participant )
+  {
+    $tokens_class_name = lib::get_class_name( 'database\limesurvey\tokens' );
+
+    $proxy_manager = lib::create( 'business\proxy_manager' );
+
+    // let the tokens record class know which SID we are dealing with by checking if
+    // there is a source-specific survey for the participant, and if not falling back
+    // on the default proxy survey
+    $proxy_sid = $proxy_manager->get_proxy_sid( $db_participant );
+    if( is_null( $proxy_sid ) )
+      throw lib::create( 'exception\runtime',
+        sprintf( 'Trying to proxy participant %s without a proxy survey.',
+                 $db_participant->uid ),
+        __METHOD__ );
+    $db_surveys = lib::create( 'database\limesurvey\surveys', $proxy_sid );
+
+    $tokens_class_name::set_sid( $proxy_sid );
+    
+    // only generate a new token if there isn't already one in cookies
+    $token = array_key_exists( 'proxying_token', $_COOKIE )
+           ? $_COOKIE['proxying_token']
+           : $proxy_manager->generate_token( $db_participant );
+    setcookie( 'proxying_token', $token, 0, COOKIE_PATH );
+
+    $tokens_mod = lib::create( 'database\modifier' );
+    $tokens_mod->where( 'token', '=', $token );
+    $db_tokens = current( $tokens_class_name::select( $tokens_mod ) );
+
+    if( false === $db_tokens )
+    { // token not found, create it
+      $db_tokens = lib::create( 'database\limesurvey\tokens' );
+      $db_tokens->token = $token;
+      $db_tokens->firstname = $db_participant->first_name;
+      $db_tokens->lastname = $db_participant->last_name;
+      $db_tokens->email = $db_participant->email;
+
+      if( 0 < strlen( $db_participant->other_name ) )
+        $db_tokens->firstname .= sprintf( ' (%s)', $db_participant->other_name );
+
+      // fill in the attributes
+      foreach( $db_surveys->get_token_attribute_names() as $key => $value )
+        $db_tokens->$key = static::get_attribute( $db_participant, NULL, $value );
+
+      $db_tokens->save();
+
+      $this->current_sid = $proxy_sid;
+      $this->current_token = $token;
+    }
+    else if( 'N' == $db_tokens->completed )
+    {
+      $this->current_sid = $proxy_sid;
+      $this->current_token = $token;
+    }
+    // else do not set the current_sid or current_token members!
   }
 
   /**

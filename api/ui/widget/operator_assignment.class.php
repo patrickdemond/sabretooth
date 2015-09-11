@@ -98,6 +98,7 @@ class operator_assignment extends \cenozo\ui\widget
 
       $db_last_consent = $db_participant->get_last_consent();
       $withdrawing = !is_null( $db_last_consent ) && false == $db_last_consent->accept;
+      $proxying = array_key_exists( 'proxying_participant', $_COOKIE );
       
       $previous_call_list = array();
       $db_last_assignment = $db_participant->get_last_finished_assignment();
@@ -168,6 +169,8 @@ class operator_assignment extends \cenozo\ui\widget
         is_null( $db_last_consent ) ? 'none' : $db_last_consent->to_string() );
       $this->set_variable( 'withdrawing', $withdrawing );
       $this->set_variable( 'allow_withdraw', !is_null( $db_qnaire->withdraw_sid ) );
+      $this->set_variable( 'proxying', $proxying );
+      $this->set_variable( 'allow_proxy', !is_null( $setting_manager->get_setting( 'general', 'proxy_survey' ) ) );
       $this->set_variable( 'survey_complete', !$current_sid );
       
       // determine whether we want to show a warning before ending a call
@@ -175,8 +178,8 @@ class operator_assignment extends \cenozo\ui\widget
       if( $setting_manager->get_setting( 'calling', 'end call warning' ) && $current_sid )
       {
         $warn_before_ending_call = true;
-        if( !$withdrawing )
-        { // if we're not withdrawing then make sure we're not on a repeating survey
+        if( !$withdrawing && !$proxying )
+        { // if we're not withdrawing or proxying then make sure we're not on a repeating survey
           $phase_mod = lib::create( 'database\modifier' );
           $phase_mod->where( 'sid', '=', $current_sid );
           $phase_mod->order( 'rank' );

@@ -94,6 +94,20 @@
           } );
         {% endif %}
 
+        {% if allow_proxy %}
+          // proxy button
+          $( "#{{ widget.full }}__proxy" ).click( function() {
+            {% if proxying %}
+              $.removeCookie( "proxying_participant" );
+              $.removeCookie( "proxying_token" );
+              window.location.reload();
+            {% else %}
+              $.cookie( "proxying_participant", "{{ participant_id }}" );
+              window.location.reload();
+            {% endif %}
+          } );
+        {% endif %}
+
         // call/end-call button
         $( "#{{ widget.full }}__call" ).button( {
           text: true,
@@ -111,7 +125,7 @@
             if( 0 == args.status.length ) {
               alert( "You must select a call result before ending the call." );
             } else {
-              {% if warn_before_ending_call %}
+              {% if warn_before_ending_call and not proxying %}
                 // show a warning if the interview is not complete
                 confirm_dialog(
                   "End Call",
@@ -341,8 +355,13 @@
           <td align="right">
             {% if allow_withdraw %}
               <button id="{{ widget.full }}__withdraw"
-                      {{ on_call ? "" : "disabled" }}
+                      {{ on_call and not proxying ? "" : "disabled" }}
                       style="width: 180px;">{{ withdrawing ? "Cancel " : "" }}Withdraw</button>
+            {% endif %}
+            {% if allow_proxy %}
+              <button id="{{ widget.full }}__proxy"
+                      {{ on_call and not withdrawing ? "" : "disabled" }}
+                      style="width: 180px;">{{ proxying ? "End " : "" }}Proxy</button>
             {% endif %}
           </td>
         </tr>

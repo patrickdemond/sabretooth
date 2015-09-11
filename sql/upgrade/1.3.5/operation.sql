@@ -35,3 +35,6 @@ VALUES( "push", "queue", "delete_queue_state", true,
 INSERT IGNORE INTO operation( type, subject, name, restricted, description )
 VALUES( "push", "queue", "edit", true,
 "Edits a queue's details." );
+
+INSERT IGNORE INTO operation( type, subject, name, restricted, description )
+VALUES( "widget", "participant", "proxy", true, "Pseudo-assignment to handle participant proxyies." );

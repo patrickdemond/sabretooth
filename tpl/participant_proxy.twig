@@ -1,0 +1,137 @@
+{##
+ # participant_proxy.twig
+ # 
+ # Pseudo-assignment template to handle participant proxies
+ # @author Patrick Emond <emondpd@mcmaster.ca>
+ # @see widget.twig for parameters
+ #}
+{% extends "widget.twig" %}
+
+{% block javascript %}
+
+  <script type="text/javascript">
+    $( function() {
+      {# if we get a signal that the proxy survey is complete,
+         back up the slot to the previous widget #}
+      {% if proxy_complete %}
+        // proxy is complete
+        alert( "The proxy script has been completed." );
+        $.removeCookie( "proxying_participant" );
+        $.removeCookie( "proxying_token" );
+        window.location.reload();
+        slot_prev_clip( {{ slot }} );
+      {% endif %}
+      
+      // view participant button
+      $( "#{{ widget.full }}__view_participant" ).click( function() {
+        slot_load( "{{ widget.full }}", "participant", "view", { id: {{ participant_id }} } );
+        $( "#{{ widget.full }}_slot" ).dialog( {
+          title: "Viewing details for {{ participant_name }}",
+          modal: true,
+          width: 800,
+          height: 600,
+          beforeClose: function( event, ui ) { $(this).html( "" ); }
+        } );
+      } );
+    
+      // cancel proxy button
+      $( "#{{ widget.full }}__proxy" ).click( function() {
+        $.removeCookie( "proxying_participant" );
+        $.removeCookie( "proxying_token" );
+        window.location.reload();
+        slot_prev_clip( {{ slot }} );
+      } );
+
+      // call/end-call button
+      $( "#{{ widget.full }}__call" ).button( {
+        text: true,
+        label: "{{ on_call ? 'End Call' : 'Call' }}",
+        icons: { primary: "ui-icon-person" }
+      } ).click( function() {
+        args = new Object();
+        {% if on_call %}
+          if( ajax_push( "phone_call", "end" ) ) window.location.reload();
+        {% else %}
+          args.phone_id = $( "#{{ widget.full }}__phone" ).val();
+          if( ajax_push( "phone_call", "begin", args ) ) window.location.reload();
+        {% endif %}
+      } );
+
+    } );
+  </script>
+
+{% endblock javascript %}
+
+{% block widget %}
+
+  {% from 'macros.twig' import note_widget %}
+  <div id="{{ widget.full }}_slot" />
+  
+  <div class="ui-widget ui-widget-content app-widget-content">
+    <table style="margin-top: 8px;">
+      <tr>
+        <td class="heading">Participant:</td>
+        <td class="content" style="position:relative">
+          {{ participant_name }} ({{ participant_uid }})
+          {{ note_widget( [widget.full,"icon"]|join, "participant", participant_id,
+                          true, participant_note_count ) }}
+        </td>
+      </tr>
+      <tr>
+        <td class="heading">Prefered Language:</td>
+        <td class="content">{{ participant_language }}</td>
+      </tr>
+      <tr>
+        <td class="heading">Previous Assignment:</td>
+        <td class="content">
+          {% if 0 == previous_call_list|length %}
+            new participant (never assigned)
+          {% else %}
+            Last assigned on {{ previous_assignment_date }} at {{ previous_assignment_time }}
+            <ul>
+              {% for call in previous_call_list %}<li>{{ call }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+    
+    <table class="spacer" cellpadding="4">
+      <tr>
+        <td align="left">
+          <button style="width: 180px;"
+                  id="{{ widget.full }}__view_participant">View Participant</button><br>
+        </td>
+        <td align="right">
+          {% if phone_list|default( false ) %}
+            {% if not on_call %}
+              <select class="ui-state-default" id="{{ widget.full }}__phone">
+                {% for id, phone in phone_list %}
+                  <option value="{{ id }}">{{ phone }}</option>
+                {% endfor %}
+              </select>
+            {% endif %}
+            <button style="width:125px"
+                    id="{{ widget.full }}__call" {{ allow_call or on_call ? '' : 'disabled' }} />
+          {% else %}
+            (no numbers to dial)
+            <button style="width:125px" id="{{ widget.full }}__call" disabled />
+          {% endif %}
+          <br>
+        </td>
+      </tr>
+      <tr>
+        <td align="left">
+          {{ note_widget( widget.full, "participant", participant_id,
+                          false, "Participant Notes" ) }}
+        </td>
+        <td align="right">
+          <button id="{{ widget.full }}__proxy"
+                  style="width: 180px;">Cancel Proxy</button>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <div class="spacer" />
+
+{% endblock widget %}
