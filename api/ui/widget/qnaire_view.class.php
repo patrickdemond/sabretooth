@@ -42,8 +42,6 @@ class qnaire_view extends \cenozo\ui\widget\base_view
     $this->add_item( 'name', 'string', 'Name' );
     $this->add_item( 'rank', 'enum', 'Rank' );
     $this->add_item( 'default_interview_method_id', 'enum', 'Default Interview method' );
-    $this->add_item( 'prev_qnaire_id', 'enum', 'Previous Questionnaire',
-      'The questionnaire which must be finished before this one begins.' );
     $this->add_item( 'delay', 'number', 'Delay (weeks)',
       'How many weeks after the previous questionnaire or event is completed '.
       'before this questionnaire may begin.' );
@@ -89,10 +87,6 @@ class qnaire_view extends \cenozo\ui\widget\base_view
     $record = $this->get_record();
 
     // create enum arrays
-    $qnaires = array();
-    foreach( $qnaire_class_name::select() as $db_qnaire )
-      if( $db_qnaire->id != $record->id )
-        $qnaires[$db_qnaire->id] = $db_qnaire->name;
     $num_ranks = $qnaire_class_name::count();
     $ranks = array();
     for( $rank = 1; $rank <= ( $num_ranks + 1 ); $rank++ ) $ranks[] = $rank;
@@ -117,7 +111,6 @@ class qnaire_view extends \cenozo\ui\widget\base_view
     $this->set_item( 'rank', $record->rank, true, $ranks );
     $this->set_item( 'default_interview_method_id',
       $record->default_interview_method_id, true, $interview_methods );
-    $this->set_item( 'prev_qnaire_id', $record->prev_qnaire_id, false, $qnaires );
     $this->set_item( 'delay', $record->delay, true );
     $this->set_item( 'withdraw_sid', $record->withdraw_sid, false, $surveys );
     $this->set_item( 'phases', $record->get_phase_count() );

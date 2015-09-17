@@ -205,6 +205,7 @@ class queue extends \cenozo\database\record
    */
   static public function repopulate( $db_participant = NULL )
   {
+    \cenozo\database\database::$debug = true;
     $database_class_name = lib::get_class_name( 'database\database' );
     $ivr_appointment_class_name = lib::get_class_name( 'database\ivr_appointment' );
     $ivr_status_class_name = lib::get_class_name( 'business\ivr_status' );
@@ -741,12 +742,12 @@ class queue extends \cenozo\database\record
       else if( 'condition' == $queue )
       {
         $parts['where'][] = 'participant_active = true';
+        $parts['where'][] = 'IFNULL( last_consent_accept = 1, true )';
         $parts['where'][] =
-          '( '.
-            'last_consent_accept IS NULL '.
-            'OR last_consent_accept = 1 '.
-          ')';
-        $parts['where'][] = 'participant_state_id IS NOT NULL';
+        '( '.
+          'participant_state_id IS NOT NULL '.
+          'OR phone_count = 0 '.
+        ')';
       }
       else if( 'eligible' == $queue )
       {
@@ -757,11 +758,7 @@ class queue extends \cenozo\database\record
         $parts['where'][] = 'participant_active = true';
         $parts['where'][] = 'participant_state_id IS NULL';
         $parts['where'][] = 'phone_count > 0';
-        $parts['where'][] =
-          '( '.
-            'last_consent_accept IS NULL OR '.
-            'last_consent_accept = 1 '.
-          ')';
+        $parts['where'][] = 'IFNULL( last_consent_accept = 1, true )';
       }
       else if( 'qnaire' == $queue )
       {
@@ -780,12 +777,7 @@ class queue extends \cenozo\database\record
         else
         {
           // the qnaire is ready to start if the start_qnaire_date is null or we have reached that date
-          $parts['where'][] = sprintf(
-            '( '.
-              'start_qnaire_date IS NULL OR '.
-              'start_qnaire_date <= DATE( %s ) '.
-            ')',
-            $viewing_date );
+          $parts['where'][] = sprintf( 'IFNULL( start_qnaire_date <= DATE( %s ), true )', $viewing_date );
 
           if( 'assigned' == $queue )
           {
@@ -848,9 +840,11 @@ class queue extends \cenozo\database\record
               {
                 // who belong to a quota which is not disabled or doesn't exist or is overridden
                 $parts['where'][] =
-                  '( qnaire_has_quota.quota_id IS NULL OR '.
+                  '( '.
+                    'qnaire_has_quota.quota_id IS NULL OR '.
                     'participant_override_quota = true OR '.
-                    'source_override_quota = true )';
+                    'source_override_quota = true '.
+                  ')';
                 
                 if( 'outside calling time' == $queue )
                 {
@@ -1004,6 +998,32 @@ class queue extends \cenozo\database\record
     $service_id = lib::create( 'business\session' )->get_service()->id;
 
     if( static::$participant_for_queue_created ) return;
+
+    // build first_qnaire_event_type table
+    $sql = 
+      'CREATE TEMPORARY TABLE IF NOT EXISTS first_qnaire_event_type '.
+      'SELECT qnaire.id AS qnaire_id, '.
+             'IF( qnaire_has_event_type.qnaire_id IS NULL, 0, count(*) ) AS total, '.
+             'GROUP_CONCAT( qnaire_has_event_type.event_type_id ) AS list '.
+      'FROM qnaire '.
+      'LEFT JOIN qnaire_has_event_type ON qnaire.id = qnaire_has_event_type.qnaire_id '.
+      'GROUP BY qnaire.id';
+    static::db()->execute( 'DROP TABLE IF EXISTS participant_for_queue' );
+    static::db()->execute( $sql );
+    static::db()->execute( 'ALTER TABLE first_qnaire_event_type ADD INDEX fk_qnaire_id ( qnaire_id )' );
+
+    // build next_qnaire_event_type table
+    $sql = 
+      'CREATE TEMPORARY TABLE IF NOT EXISTS next_qnaire_event_type '.
+      'SELECT qnaire.id AS qnaire_id, '.
+             'IF( qnaire_has_event_type.qnaire_id IS NULL, 0, count(*) ) AS total, '.
+             'GROUP_CONCAT( qnaire_has_event_type.event_type_id ) AS list '.
+      'FROM qnaire '.
+      'LEFT JOIN qnaire_has_event_type ON qnaire.id = qnaire_has_event_type.qnaire_id '.
+      'GROUP BY qnaire.id';
+    static::db()->execute( 'DROP TABLE IF EXISTS participant_for_queue' );
+    static::db()->execute( $sql );
+    static::db()->execute( 'ALTER TABLE next_qnaire_event_type ADD INDEX fk_qnaire_id ( qnaire_id )' );
 
     // build participant_for_queue table
     $sql = sprintf( 'CREATE TEMPORARY TABLE IF NOT EXISTS participant_for_queue '.
@@ -1229,7 +1249,7 @@ IF
     current_interview.id IS NULL,
     IF
     (
-      ( SELECT COUNT(*) FROM qnaire_has_event_type WHERE qnaire_id = first_qnaire.id ),
+      first_qnaire_event_type.total,
       IFNULL( first_event.datetime, UTC_TIMESTAMP() ) + INTERVAL first_qnaire.delay WEEK,
       NULL
     ),
@@ -1239,7 +1259,7 @@ IF
       GREATEST
       (
         IFNULL( next_event.datetime, "" ),
-        IFNULL( next_prev_assignment.end_datetime, "" )
+        IFNULL( last_assignment.end_datetime, "" )
       ) + INTERVAL next_qnaire.delay WEEK,
       NULL
     )
@@ -1254,16 +1274,19 @@ ON service_has_participant.service_id = service.id
 AND service.id = %s
 JOIN source
 ON participant.source_id = source.id
+
 LEFT JOIN participant_primary_address
 ON participant.id = participant_primary_address.participant_id
 LEFT JOIN address AS primary_address
 ON participant_primary_address.address_id = primary_address.id
 LEFT JOIN region AS primary_region
 ON primary_address.region_id = primary_region.id
+
 JOIN participant_last_consent
 ON participant.id = participant_last_consent.participant_id
 LEFT JOIN consent AS last_consent
 ON last_consent.id = participant_last_consent.consent_id
+
 LEFT JOIN participant_last_interview
 ON participant.id = participant_last_interview.participant_id
 LEFT JOIN interview AS last_interview
@@ -1276,57 +1299,29 @@ LEFT JOIN assignment AS last_assignment
 ON interview_last_assignment.assignment_id = last_assignment.id
 LEFT JOIN qnaire AS current_qnaire
 ON current_qnaire.id = current_interview.qnaire_id
-LEFT JOIN qnaire AS next_qnaire
-ON next_qnaire.rank = ( current_qnaire.rank + 1 )
-LEFT JOIN qnaire AS next_prev_qnaire
-ON next_prev_qnaire.id = next_qnaire.prev_qnaire_id
-LEFT JOIN interview AS next_prev_interview
-ON next_prev_interview.qnaire_id = next_prev_qnaire.id
-AND next_prev_interview.participant_id = participant.id
-LEFT JOIN assignment AS next_prev_assignment
-ON next_prev_assignment.interview_id = next_prev_interview.id
+
 CROSS JOIN qnaire AS first_qnaire
 ON first_qnaire.rank = 1
-LEFT JOIN event first_event
+LEFT JOIN first_qnaire_event_type
+ON first_qnaire.id = first_qnaire_event_type.qnaire_id
+LEFT JOIN event AS first_event
 ON participant.id = first_event.participant_id
-AND first_event.event_type_id IN
-(
-  SELECT event_type_id
-  FROM qnaire_has_event_type
-  WHERE qnaire_id = first_qnaire.id
+AND IF(
+  first_qnaire_event_type.total,
+  first_event.event_type_id IN( first_qnaire_event_type.list ),
+  false
 )
-LEFT JOIN event next_event
+
+LEFT JOIN qnaire AS next_qnaire
+ON next_qnaire.rank = ( current_qnaire.rank + 1 )
+LEFT JOIN next_qnaire_event_type
+ON next_qnaire.id = next_qnaire_event_type.qnaire_id
+LEFT JOIN event AS next_event
 ON participant.id = next_event.participant_id
-AND next_event.event_type_id IN
-(
-  SELECT event_type_id
-  FROM qnaire_has_event_type
-  WHERE qnaire_id = next_qnaire.id
-)
-WHERE
-(
-  current_qnaire.rank IS NULL
-  OR current_qnaire.rank =
-  (
-    SELECT MAX( qnaire.rank )
-    FROM interview
-    JOIN qnaire ON qnaire.id = interview.qnaire_id
-    WHERE interview.participant_id = current_interview.participant_id
-    GROUP BY current_interview.participant_id
-  )
-)
-AND
-(
-  next_prev_assignment.end_datetime IS NULL
-  OR next_prev_assignment.end_datetime =
-  (
-    SELECT MAX( assignment.end_datetime )
-    FROM interview
-    JOIN assignment ON assignment.interview_id = interview.id
-    WHERE interview.qnaire_id = next_prev_qnaire.id
-    AND assignment.id = next_prev_assignment.id
-    GROUP BY next_prev_assignment.interview_id
-  )
+AND IF(
+  next_qnaire_event_type.total,
+  next_event.event_type_id IN( next_qnaire_event_type.list ),
+  false
 )
 SQL;
 }

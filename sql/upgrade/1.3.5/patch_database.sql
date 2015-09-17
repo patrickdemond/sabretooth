@@ -7,6 +7,7 @@ SOURCE role_has_operation.sql
 SOURCE queue_state.sql
 SOURCE setting_value.sql
 SOURCE setting.sql
+SOURCE qnaire.sql
 SOURCE update_version_number.sql
 
 COMMIT;
