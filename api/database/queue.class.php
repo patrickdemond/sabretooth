@@ -205,7 +205,6 @@ class queue extends \cenozo\database\record
    */
   static public function repopulate( $db_participant = NULL )
   {
-    \cenozo\database\database::$debug = true;
     $database_class_name = lib::get_class_name( 'database\database' );
     $ivr_appointment_class_name = lib::get_class_name( 'database\ivr_appointment' );
     $ivr_status_class_name = lib::get_class_name( 'business\ivr_status' );
