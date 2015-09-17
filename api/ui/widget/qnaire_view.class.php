@@ -95,7 +95,7 @@ class qnaire_view extends \cenozo\ui\widget\base_view
     $interview_methods = array();
     $interview_mod = lib::create( 'database\modifier' );
     $interview_mod->order( 'interview_method.name' );
-    foreach( $record->get_interview_method_list( $interview_mod ) as $db_interview_method )
+    foreach( $interview_method_class_name::select( $interview_mod ) as $db_interview_method )
       $interview_methods[$db_interview_method->id] = $db_interview_method->name;
 
     $surveys = array();

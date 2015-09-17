@@ -11,12 +11,12 @@ CREATE PROCEDURE patch_qnaire()
       WHERE TABLE_SCHEMA = DATABASE()
       AND TABLE_NAME = "qnaire"
       AND COLUMN_NAME = "prev_qnaire_id" );
-    IF @test = 0 THEN
+    IF @test = 1 THEN
       ALTER TABLE qnaire
       DROP FOREIGN KEY fk_qnaire_prev_qnaire_id,
       DROP KEY fk_prev_qnaire_id;
 
-      ALTER TABLE qnaire DROP COLUMN qnaire_id;
+      ALTER TABLE qnaire DROP COLUMN prev_qnaire_id;
     END IF;
 
   END //
