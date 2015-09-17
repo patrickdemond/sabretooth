@@ -1029,7 +1029,7 @@ class queue extends \cenozo\database\record
                     static::$participant_for_queue_sql,
                     $database_class_name::format_string( $service_id ) );
     if( !is_null( $db_participant ) )
-      $sql .= sprintf( ' AND participant.id = %s ',
+      $sql .= sprintf( ' WHERE participant.id = %s ',
                        $database_class_name::format_string( $db_participant->id ) );
 
     static::db()->execute( 'DROP TABLE IF EXISTS participant_for_queue' );
