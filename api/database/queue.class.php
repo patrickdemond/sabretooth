@@ -1242,7 +1242,7 @@ IF
       current_interview.interview_method_id
   )
 ) AS effective_interview_method_id,
-(
+DATE(
   IF
   (
     current_interview.id IS NULL,
