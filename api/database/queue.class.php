@@ -1242,26 +1242,24 @@ IF
       current_interview.interview_method_id
   )
 ) AS effective_interview_method_id,
-DATE(
+IF
+(
+  current_interview.id IS NULL,
   IF
   (
-    current_interview.id IS NULL,
-    IF
+    first_qnaire_event_type.total,
+    IFNULL( first_event.datetime, UTC_TIMESTAMP() ) + INTERVAL first_qnaire.delay WEEK,
+    NULL
+  ),
+  IF
+  (
+    current_interview.completed,
+    GREATEST
     (
-      first_qnaire_event_type.total,
-      IFNULL( first_event.datetime, UTC_TIMESTAMP() ) + INTERVAL first_qnaire.delay WEEK,
-      NULL
-    ),
-    IF
-    (
-      current_interview.completed,
-      GREATEST
-      (
-        IFNULL( next_event.datetime, "" ),
-        IFNULL( last_assignment.end_datetime, "" )
-      ) + INTERVAL next_qnaire.delay WEEK,
-      NULL
-    )
+      IFNULL( next_event.datetime, "" ),
+      IFNULL( last_assignment.end_datetime, "" )
+    ) + INTERVAL next_qnaire.delay WEEK,
+    NULL
   )
 ) AS start_qnaire_date
 FROM participant
@@ -1307,7 +1305,7 @@ LEFT JOIN event AS first_event
 ON participant.id = first_event.participant_id
 AND IF(
   first_qnaire_event_type.total,
-  first_event.event_type_id IN( first_qnaire_event_type.list ),
+  FIND_IN_SET( first_event.event_type_id, first_qnaire_event_type.list ),
   false
 )
 
@@ -1319,7 +1317,7 @@ LEFT JOIN event AS next_event
 ON participant.id = next_event.participant_id
 AND IF(
   next_qnaire_event_type.total,
-  next_event.event_type_id IN( next_qnaire_event_type.list ),
+  FIND_IN_SET( next_event.event_type_id, next_qnaire_event_type.list ),
   false
 )
 SQL;
