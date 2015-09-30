@@ -45,6 +45,7 @@ $SETTINGS['voip']['url'] = 'http://localhost:8088/mxml';
 $SETTINGS['voip']['username'] = '';
 $SETTINGS['voip']['password'] = '';
 $SETTINGS['voip']['prefix'] = '';
+$SETTINGS['voip']['monitor'] = '';
 
 // IVR setup
 $SETTINGS['ivr']['enabled'] = false;
@@ -52,7 +53,3 @@ $SETTINGS['ivr']['host'] = 'https://localhost/'; // must end in a /
 $SETTINGS['ivr']['service'] = 'service_path.asmx?wsdl'; // must NOT begin with a /
 $SETTINGS['ivr']['username'] = '';
 $SETTINGS['ivr']['password'] = '';
-
-// the directory to write recorded calls
-// (must be an absolute path that the asterisk server's user has access to)
-$SETTINGS['path']['VOIP_MONITOR'] = '/var/local/sabretooth/monitor';

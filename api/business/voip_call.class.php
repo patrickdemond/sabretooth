@@ -176,8 +176,9 @@ class voip_call extends \cenozo\base_object
   public function start_monitoring( $filename )
   {
     if( !lib::create( 'business\voip_manager' )->get_enabled() ) return;
- 
-    $filename = sprintf( '%s/%s', VOIP_MONITOR_PATH, $filename );
+
+    $setting_manager = lib::create( 'business\setting_manager' );
+    $filename = sprintf( '%s/%s', $setting_manager->get_setting( 'voip', 'monitor' ), $filename );
 
     if( false == $this->manager->monitor( $this->get_channel(), $filename, 'wav' ) )
       throw lib::create( 'exception\voip', $this->manager->getLastError(), __METHOD__ );

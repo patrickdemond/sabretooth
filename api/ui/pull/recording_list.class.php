@@ -111,7 +111,8 @@ class recording_list extends \cenozo\ui\pull\base_list
   protected function process_record( $record )
   {
     $item = parent::process_record( $record );
-    $item['url'] = sprintf( '%s/%s-out.wav', VOIP_MONITOR_URL, $record->get_filename() );
+    if( defined( 'VOIP_MONITOR_URL' ) )
+      $item['url'] = sprintf( '%s/%s-out.wav', VOIP_MONITOR_URL, $record->get_filename() );
     return $item;
   }
 
