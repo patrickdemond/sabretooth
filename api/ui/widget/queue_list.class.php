@@ -83,13 +83,13 @@ class queue_list extends \cenozo\ui\widget\base_list
   {
     parent::setup();
 
-    $database_class_name = lib::get_class_name( 'database\database' );
     $site_class_name = lib::get_class_name( 'database\site' );
     $qnaire_class_name = lib::get_class_name( 'database\qnaire' );
     $queue_class_name = lib::get_class_name( 'database\queue' );
     $language_class_name = lib::get_class_name( 'database\language' );
 
     $session = lib::create( 'business\session' );
+    $db = $session->get_database();
 
     $restrict_site_id = $this->get_argument( 'restrict_site_id', 0 );
     $this->set_variable( 'restrict_site_id', $restrict_site_id );
@@ -157,7 +157,7 @@ class queue_list extends \cenozo\ui\widget\base_list
       if( 'any' != $restrict_language_id )
       {
         $column = sprintf( 'IFNULL( participant.language_id, %s )',
-                           $database_class_name::format_string(
+                           $db->format_string(
                              $session->get_service()->language_id ) );
         $modifier->where( $column, '=', $restrict_language_id );
       }

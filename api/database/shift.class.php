@@ -54,17 +54,16 @@ class shift extends \cenozo\database\record
     $end_datetime = util::to_server_datetime( $this->end_datetime );
 
     // (need to use custom SQL)
-    $class_name = lib::get_class_name( 'database\database' );
     $overlap_ids = static::db()->get_col( 
       sprintf( 'SELECT id FROM %s %s '.
                'AND NOT ( ( start_datetime <= %s AND end_datetime <= %s ) OR '.
                          '( start_datetime >= %s AND end_datetime >= %s ) )',
                static::get_table_name(),
                $modifier->get_where(),
-               $class_name::format_string( $start_datetime ),
-               $class_name::format_string( $start_datetime ),
-               $class_name::format_string( $end_datetime ),
-               $class_name::format_string( $end_datetime ) ) );
+               static::db()->format_string( $start_datetime ),
+               static::db()->format_string( $start_datetime ),
+               static::db()->format_string( $end_datetime ),
+               static::db()->format_string( $end_datetime ) ) );
     
     if( 0 < count( $overlap_ids ) )
     {

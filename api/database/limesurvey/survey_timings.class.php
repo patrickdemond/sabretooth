@@ -42,8 +42,6 @@ class survey_timings extends sid_record
    */
   public static function get_averages( $db_region = NULL )
   {
-    $database_class_name = lib::get_class_name( 'database\database' );
-
     // we need to get all *X*X*time based column names from the information schema
     // to build custom sql
     $information_mod = lib::create( 'database\modifier' );
@@ -69,8 +67,6 @@ class survey_timings extends sid_record
 
     if( !is_null( $db_region ) )
     {
-      $db = lib::create( 'business\session' )->get_database();
-
       $sql .= sprintf( ' '.
         'FROM %s t '.
         'JOIN %s s ON t.id = s.id '.
@@ -85,7 +81,7 @@ class survey_timings extends sid_record
         $db->get_prefix(),
         $db->get_prefix(),
         $db->get_prefix(),
-        $database_class_name::format_string( $db_region->id ) );
+        static::db()->format_string( $db_region->id ) );
     }
     else
     {

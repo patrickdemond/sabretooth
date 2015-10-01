@@ -40,7 +40,6 @@ class participant_status_report extends \cenozo\ui\pull\base_report
   {
     $this->report->set_orientation( 'landscape' );
 
-    $database_class_name = lib::get_class_name( 'database\database' );
     $record_class_name = lib::get_class_name( 'database\record' );
     $phone_call_class_name = lib::get_class_name( 'database\phone_call' );
     $state_class_name = lib::get_class_name( 'database\state' );
@@ -50,6 +49,7 @@ class participant_status_report extends \cenozo\ui\pull\base_report
 
     $setting_manager = lib::create( 'business\setting_manager' );
     $session = lib::create( 'business\session' );
+    $db = $session->get_database();
     $is_supervisor = 'supervisor' == $session->get_role()->name;
     $db_service = $session->get_service();
     $db_site = $session->get_site();
@@ -182,7 +182,7 @@ class participant_status_report extends \cenozo\ui\pull\base_report
       'AND service_has_participant.service_id = participant_site.service_id '.
       'LEFT JOIN site '.
       'ON participant_site.site_id = site.id ',
-      $database_class_name::format_string( $db_service->id ) );
+      $db->format_string( $db_service->id ) );
 
     if( 'Province' == $breakdown || $restrict_province_id )
     {
@@ -267,7 +267,7 @@ class participant_status_report extends \cenozo\ui\pull\base_report
                'JOIN assignment ON interview.id = assignment.interview_id '.
                'JOIN phone_call ON assignment.id = phone_call.assignment_id '.
                'GROUP BY category',
-               $database_class_name::format_string( $db_qnaire->id ) ) );
+               $db->format_string( $db_qnaire->id ) ) );
 
     foreach( $rows as $row )
     {

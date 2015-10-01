@@ -26,7 +26,7 @@ class participant_report extends \cenozo\ui\pull\participant_report
   {
     parent::prepare();
 
-    $database_class_name = lib::get_class_name( 'database\database' );
+    $db = lib::create( 'business\session' )->get_database();
 
     // get the report arguments
     $last_call_result = $this->get_argument( 'last_call_result' );
@@ -60,7 +60,7 @@ class participant_report extends \cenozo\ui\pull\participant_report
       if( $qnaire_id )
         $this->sql_tables .= sprintf(
           'AND queue_has_participant.qnaire_id = %s ',
-          $database_class_name::format_string( $qnaire_id ) );
+          $db->format_string( $qnaire_id ) );
 
       $this->sql_tables .=
         'JOIN queue ON queue_has_participant.queue_id = queue.id '.

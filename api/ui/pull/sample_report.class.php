@@ -36,7 +36,7 @@ class sample_report extends \cenozo\ui\pull\base_report
    */
   protected function build()
   {
-    $database_class_name = lib::get_class_name( 'database\database' );
+    $db = lib::create( 'business\session' )->get_database();
     $participant_class_name = lib::get_class_name( 'database\participant' );
 
     $db_qnaire = lib::create( 'database\qnaire', $this->get_argument( 'restrict_qnaire_id' ) );
@@ -131,7 +131,7 @@ class sample_report extends \cenozo\ui\pull\base_report
       'AND appointment.assignment_id IS NULL '.
       'JOIN temp_last_consent ON temp_last_consent.participant_id = participant.id '.
       'LEFT JOIN language ON participant.language_id = language.id ',
-      $database_class_name::format_string( $service_id ) );
+      $db->format_string( $service_id ) );
 
     if( !is_null( $db_collection ) )
     {
@@ -139,7 +139,7 @@ class sample_report extends \cenozo\ui\pull\base_report
         'JOIN collection_has_participant '.
         'ON participant.id = collection_has_participant.participant_id '.
         'AND collection_has_participant.collection_id = %s',
-        $database_class_name::format_string( $db_collection->id ) );
+        $db->format_string( $db_collection->id ) );
     }
 
     $sql .= sprintf(
@@ -154,10 +154,10 @@ class sample_report extends \cenozo\ui\pull\base_report
           'WHERE qnaire_id = qnaire.id '.
         ') = 0 '.
       ') ',
-      $database_class_name::format_string( $db_qnaire->id ) );
+      $db->format_string( $db_qnaire->id ) );
 
     if( !is_null( $db_site ) )
-      $sql .= sprintf( 'AND site.id = %s ', $database_class_name::format_string( $db_site->id ) );
+      $sql .= sprintf( 'AND site.id = %s ', $db->format_string( $db_site->id ) );
 
     $sql .= 'GROUP BY participant.uid';
 

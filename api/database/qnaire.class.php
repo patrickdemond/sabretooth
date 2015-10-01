@@ -36,14 +36,12 @@ class qnaire extends \cenozo\database\has_rank
    */
   public static function is_interview_method_in_use( $db_interview_method )
   {
-    $database_class_name = lib::get_class_name( 'database\database' );
-
     // quick custom sql to determine whether any qnaire is using a particular interview method
     return (bool) static::db()->get_one( sprintf(
       'SELECT 0 < COUNT(*) '.
       'FROM qnaire_has_interview_method '.
       'WHERE interview_method_id = %s',
-      $database_class_name::format_string( $db_interview_method->id ) ) );
+      static::db()->format_string( $db_interview_method->id ) ) );
   }
 
   /**

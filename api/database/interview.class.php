@@ -30,10 +30,9 @@ class interview extends \cenozo\database\has_note
     }
     
     // need custom SQL
-    $database_class_name = lib::get_class_name( 'database\database' );
     $assignment_id = static::db()->get_one(
       sprintf( 'SELECT assignment_id FROM interview_last_assignment WHERE interview_id = %s',
-               $database_class_name::format_string( $this->id ) ) );
+               static::db()->format_string( $this->id ) ) );
     return $assignment_id ? lib::create( 'database\assignment', $assignment_id ) : NULL;
   }
 

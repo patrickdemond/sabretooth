@@ -34,13 +34,13 @@ class participant_tree extends \cenozo\ui\pull
    */
   protected function execute()
   {
-    $database_class_name = lib::get_class_name( 'database\database' );
     $queue_class_name = lib::get_class_name( 'database\queue' );
     $qnaire_class_name = lib::get_class_name( 'database\qnaire' );
 
     parent::execute();
 
     $session = lib::create( 'business\session' );
+    $db = $session->get_database();
     $all_sites = $session->get_role()->all_sites;
     
     if( $all_sites )
@@ -68,7 +68,7 @@ class participant_tree extends \cenozo\ui\pull
       if( 'any' != $restrict_language_id )
       {
         $column = sprintf( 'IFNULL( participant.language_id, %s )',
-                           $database_class_name::format_string(
+                           $db->format_string(
                              $session->get_service()->language_id ) );
         $queue_mod->where( $column, '=', $restrict_language_id );
       }

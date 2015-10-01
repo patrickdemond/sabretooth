@@ -36,7 +36,7 @@ class participant_tree_report extends \cenozo\ui\pull\base_report
    */
   protected function build()
   {
-    $database_class_name = lib::get_class_name( 'database\database' );
+    $db = lib::create( 'business\session' )->get_database();
     $interview_method_class_name = lib::get_class_name( 'database\interview_method' );
     $qnaire_class_name = lib::get_class_name( 'database\qnaire' );
     $queue_class_name = lib::get_class_name( 'database\queue' );
@@ -85,7 +85,7 @@ class participant_tree_report extends \cenozo\ui\pull\base_report
         if( !is_null( $db_language ) )
         {
           $column = sprintf( 'IFNULL( participant.language_id, %s )',
-                             $database_class_name::format_string(
+                             $db->format_string(
                                lib::create( 'business\session' )->get_service()->language_id ) );
           $participant_mod->where( $column, '=', $db_language->id );
         }
@@ -108,7 +108,7 @@ class participant_tree_report extends \cenozo\ui\pull\base_report
         if( !is_null( $db_language ) )
         {
           $column = sprintf( 'IFNULL( participant.language_id, %s )',
-                             $database_class_name::format_string(
+                             $db->format_string(
                                lib::create( 'business\session' )->get_service()->language_id ) );
           $participant_mod->where( $column, '=', $db_language->id );
         }

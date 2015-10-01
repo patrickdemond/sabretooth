@@ -54,12 +54,12 @@ class assignment_begin extends \cenozo\ui\push
   {
     parent::execute();
     
-    $database_class_name = lib::get_class_name( 'database\database' );
     $qnaire_class_name = lib::get_class_name( 'database\qnaire' );
     $queue_class_name = lib::get_class_name( 'database\queue' );
     $interview_class_name = lib::get_class_name( 'database\interview' );
 
     $session = lib::create( 'business\session' );
+    $db = $session->get_database();
     $setting_manager = lib::create( 'business\setting_manager' );
 
     // make sure another thread didn't pick up an assignment while waiting
@@ -90,7 +90,7 @@ class assignment_begin extends \cenozo\ui\push
       // prepare a language string to be used in the participant mod
       $language_column = sprintf(
         'IFNULL( participant.language_id, %s )',
-        $database_class_name::format_string( $session->get_service()->language_id ) );
+        $db->format_string( $session->get_service()->language_id ) );
       $user_language_id_list = $db_user->get_language_idlist();
       
       // make sure only one participant is assigned at a time
