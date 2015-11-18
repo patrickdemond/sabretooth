@@ -443,6 +443,74 @@ class survey_manager extends \cenozo\singleton
   {
     $value = NULL;
 
+    // check for new participant.opal.* keys
+    if( 1 == preg_match( '/^participant\.opal\./', $key ) )
+    {
+      $parts = static::parse_key( $key, true );
+      
+      if( !( 4 == count( $parts ) || 5 == count( $parts ) ) )
+        throw lib::create( 'exception\argument', 'key', $key, __METHOD__ );
+
+      $datasource = $parts[1];
+      $table = $parts[2];
+      $variable = $parts[3];
+
+      $setting_manager = lib::create( 'business\setting_manager' );
+      $opal_url = $setting_manager->get_setting( 'opal', 'server' );
+      $opal_manager = lib::create( 'business\opal_manager', $opal_url );
+
+      if( $opal_manager->get_enabled() )
+      {
+        try
+        {
+          if( 5 == count( $parts ) )
+          {
+            if( 'label' == $parts[4] )
+            {
+              // participant.opal.<datasource>.<table>.<variable>.label (returns label) or
+              // opal.<datasource>.<table>.<variable>.label (returns label)
+              $value = $opal_manager->get_label(
+                $datasource, $table, $variable, $value, $db_participant->get_language() );
+            }
+            else if( 'cache' == $parts[4] )
+            {
+              // participant.opal.<datasource>.<table>.<variable>.cache (caches data)
+              // opal.<datasource>.<table>.<variable>.cache (caches data)
+
+              $variable_cache_class_name = lib::get_class_name( 'database\variable_cache' );
+              $variable_cache_class_name::remove_expired(); // make sure to clean-up before searching
+
+              // get the data from the cache, or if it is missing then cache them
+              $variable_cache_mod = lib::create( 'database\modifier' );
+              $variable_cache_mod->where( 'variable', '=', $variable );
+              $variable_cache_list = $db_participant->get_variable_cache_list( $variable_cache_mod );
+              if( 0 == count( $variable_cache_list ) )
+              {
+                $values = $opal_manager->get_values( $datasource, $table, $db_participant );
+                $variable_cache_class_name::overwrite_values( $db_participant, $values );
+                $value = $values[$variable];
+              }
+              else
+              {
+                // participant.opal.<datasource>.<table>.<variable> (returns value) or
+                // opal.<datasource>.<table>.<variable> (returns value)
+                $value = $variable_cache_list[0]->value;
+              }
+            }
+            else throw lib::create( 'exception\argument', 'key', $key, __METHOD__ );
+          }
+          else
+          {
+            $value = $opal_manager->get_value( $datasource, $table, $db_participant, $variable );
+          }
+        }
+        catch( \cenozo\exception\base_exception $e )
+        {
+          // ignore argument exceptions (data not found in Opal) and report the rest
+          if( 'argument' != $e->get_type() ) log::warning( $e->get_message() );
+        }
+      }
+    }
     if( 'cohort' == $key )
     {
       $value = $db_participant->get_cohort()->name;
@@ -829,6 +897,36 @@ class survey_manager extends \cenozo\singleton
     return $value;
   }
   
+  /**
+   * Parse the key used to identify which data value to return
+   * 
+   * This is code from Cenozo2 which has been back-ported in order to make the participant.opal. attributes
+   * work correctly.
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @param string $key The key string defining which data to return
+   * @return array
+   * @access protected
+   */
+  protected static function parse_key( $key, $remove_participant = false )
+  {
+    // two consecutive periods (..) is an escaped .
+    $key = str_replace( '..', chr( 37 ), $key );
+
+    // split the key into table/column parts then replace the escaped char back into a .
+    $parts = explode( '.', $key );
+    if( 2 > count( $parts ) )
+      throw lib::create( 'exception\argument', 'key', $key, __METHOD__ );
+    foreach( $parts as $index => $part ) $parts[$index] = str_replace( chr( 37 ), '.', $part );
+
+    // All keys used to return participant values may be prepended with "participant."
+    // If $remove_participant is true then remove it, but only if there are more than 2 parts
+    // to the key
+    if( $remove_participant && 'participant' == $parts[0] && 2 < count( $parts ) )
+      array_shift( $parts );
+
+    return $parts;
+  }
+
   /**
    * This assignment's current sid
    * @var int
