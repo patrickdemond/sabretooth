@@ -541,7 +541,19 @@ class survey_manager extends \cenozo\singleton
         }
       }
     }
-    if( 'cohort' == $key )
+    else if( 'informant.count()' == $key )
+    {
+      $alternate_mod = lib::create( 'database\modifier' );
+      $alternate_mod->where( 'informant', '=', true );
+      $value = $db_participant->get_alternate_count( $alternate_mod );
+    }
+    else if( 'proxy.count()' == $key )
+    {
+      $alternate_mod = lib::create( 'database\modifier' );
+      $alternate_mod->where( 'proxy', '=', true );
+      $value = $db_participant->get_alternate_count( $alternate_mod );
+    }
+    else if( 'cohort' == $key )
     {
       $value = $db_participant->get_cohort()->name;
     }
@@ -830,12 +842,12 @@ class survey_manager extends \cenozo\singleton
         }
       }
     }
-    else if( 'operator first_name' == $key )
+    else if( 'operator first_name' == $key || 'user first_name' == $key )
     {
       $db_user = lib::create( 'business\session' )->get_user();
       $value = $db_user->first_name;
     }
-    else if( 'operator last_name' == $key )
+    else if( 'operator last_name' == $key || 'user last_name' == $key )
     {
       $db_user = lib::create( 'business\session' )->get_user();
       $value = $db_user->last_name;
@@ -852,7 +864,7 @@ class survey_manager extends \cenozo\singleton
         $event_type_class_name::get_unique_record( 'name', 'completed pilot interview' ) );
       $value = 0 < count( $datetime_list ) ? current( $datetime_list ) : NULL;
     }
-    else if( 'last interview date' == $key )
+    else if( 'last interview date' == $key || 'last completed interview' == $key )
     {
       $event_type_class_name = lib::get_class_name( 'database\event_type' );
       $event_mod = lib::create( 'database\modifier' );
