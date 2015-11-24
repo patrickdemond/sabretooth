@@ -443,8 +443,38 @@ class survey_manager extends \cenozo\singleton
   {
     $value = NULL;
 
+    // check for new participant.limesurvey.* keys
+    if( 1 == preg_match( '/^participant\.limesurvey\./', $key ) )
+    {
+      $interview_class_name = lib::get_class_name( 'database\interview' );
+      $survey_class_name = lib::get_class_name( 'database\limesurvey\survey' );
+
+      $parts = static::parse_key( $key, true );
+
+      if( 3 != count( $parts ) )
+        throw lib::create( 'exception\argument', 'key', $key, __METHOD__ );
+
+      $sid = $parts[1];
+      $q_title = $parts[2];
+
+      // get this participant's survey for the given sid
+      $db_interview = $interview_class_name::get_interview_for_sid( $db_participant, $sid );
+      if( !is_null( $db_interview ) )
+      {
+        $survey_class_name::set_sid( $sid );
+        $survey_mod = lib::create( 'database\modifier' );
+        $survey_mod->where( 'token', '=', $db_interview->id.'_0' );
+        $survey_mod->order_desc( 'datestamp' );
+        $survey_list = $survey_class_name::select( $survey_mod );
+        if( 0 < count( $survey_list ) )
+        {
+          $db_survey = current( $survey_list );
+          $value = $db_survey->get_response( $q_title );
+        }
+      }
+    }
     // check for new participant.opal.* keys
-    if( 1 == preg_match( '/^participant\.opal\./', $key ) )
+    else if( 1 == preg_match( '/^participant\.opal\./', $key ) )
     {
       $parts = static::parse_key( $key, true );
       

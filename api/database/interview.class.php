@@ -289,6 +289,23 @@ class interview extends \cenozo\database\has_note
 
     return $failed_calls;
   }
+
+  public static function get_interview_for_sid( $db_participant, $sid )
+  {
+    $sql = sprintf(
+      'SELECT interview.id '.
+      'FROM interview '.
+      'JOIN participant on interview.participant_id = participant.id '.
+      'JOIN qnaire on interview.qnaire_id = qnaire.id '.
+      'JOIN phase on qnaire.id = phase.qnaire_id '.
+      'WHERE participant.id = %s '.
+      'AND phase.sid = %s',
+      static::db()->format_string( $db_participant->id ),
+      static::db()->format_string( $sid ) );
+
+    $id = static::db()->get_one( $sql );
+    return is_null( $id ) ? NULL : new static( $id );
+  }
   
   /**
    * Creates the interview_failed_call_count temporary table needed by all queues.
