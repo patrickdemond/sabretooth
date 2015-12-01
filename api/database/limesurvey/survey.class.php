@@ -31,7 +31,7 @@ class survey extends sid_record
     $modifier->group( 'sid' );
     $modifier->group( 'gid' );
     $modifier->group( 'qid' );
-    $sql = sprintf( 'SELECT gid, qid FROM %s %s',
+    $sql = sprintf( 'SELECT gid, qid, parent_qid FROM %s %s',
                     static::db()->get_prefix().'questions',
                     $modifier->get_sql() );
     
@@ -39,7 +39,9 @@ class survey extends sid_record
     if( 0 == count( $row ) )
       throw lib::create( 'exception\runtime', 'Question code not found in survey.', __METHOD__ );
 
-    $column_name = sprintf( '%sX%sX%s', static::get_sid(), $row['gid'], $row['qid'] );
+    $column_name = $row['parent_qid']
+                 ? sprintf( '%sX%sX%s%s', static::get_sid(), $row['gid'], $row['parent_qid'], $question_code )
+                 : sprintf( '%sX%sX%s', static::get_sid(), $row['gid'], $row['qid'] );
     return $this->$column_name;
   }
 
