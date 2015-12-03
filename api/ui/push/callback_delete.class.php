@@ -33,9 +33,8 @@ class callback_delete extends \cenozo\ui\push\base_delete
    */
   protected function execute()
   {
+    $db_participant = $this->get_record()->get_participant();
     parent::execute();
-
-    // if the owner is a participant then update their queue status
-    $this->get_record()->get_participant()->update_queue_status();
+    $db_participant->update_queue_status();
   }
 }

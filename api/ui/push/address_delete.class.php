@@ -24,10 +24,10 @@ class address_delete extends \cenozo\ui\push\address_delete
    */
   protected function execute()
   {
+    $db_participant = $this->get_record()->get_person()->get_participant();
     parent::execute();
 
     // if the owner is a participant then update their queue status
-    $db_participant = $this->get_record()->get_person()->get_participant();
     if( !is_null( $db_participant ) ) $db_participant->update_queue_status();
   }
 }

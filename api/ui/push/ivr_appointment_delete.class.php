@@ -33,13 +33,14 @@ class ivr_appointment_delete extends \cenozo\ui\push\base_delete
    */
   protected function execute()
   {
+    $db_participant = $this->get_record()->get_participant();
     parent::execute();
 
     // send message to IVR
     $ivr_manager = lib::create( 'business\ivr_manager' );
-    $ivr_manager->remove_appointment( $this->get_record()->get_participant() );
+    $ivr_manager->remove_appointment( $db_participant );
 
     // if the owner is a participant then update their queue status
-    $this->get_record()->get_participant()->update_queue_status();
+    $db_participant->update_queue_status();
   }
 }

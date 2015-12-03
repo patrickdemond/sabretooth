@@ -33,8 +33,8 @@ class appointment_delete extends \cenozo\ui\push\base_delete
    */
   protected function execute()
   {
+    $db_participant = $this->get_record()->get_participant();
     parent::execute();
-
-    $this->get_record()->get_participant()->update_queue_status();
+    $db_participant->update_queue_status();
   }
 }

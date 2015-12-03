@@ -24,9 +24,8 @@ class consent_delete extends \cenozo\ui\push\consent_delete
    */
   protected function execute()
   {
+    $db_participant = $this->get_record()->get_participant();
     parent::execute();
-
-    // update this participant's queue status
-    $this->get_record()->get_participant()->update_queue_status();
+    $db_participant->update_queue_status();
   }
 }
