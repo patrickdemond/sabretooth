@@ -43,19 +43,33 @@ class proxy_manager extends \cenozo\singleton
 
     $token = $db_participant->uid;
 
-    // create an counter as a postfix
+    // need to add a postfix to the token; try for an open assignment first
     $modifier = lib::create( 'database\modifier' );
-    $modifier->where( 'token', 'LIKE', $db_participant->uid.'_%' );
-    $sub_select = sprintf(
-      '( SELECT MAX(tid) FROM %s %s )', $tokens_class_name::get_table_name(), $modifier->get_sql() );
+    $modifier->where( 'interview.participant_id', '=', $db_participant->id );
+    $modifier->where( 'assignment.end_datetime', '=', NULL );
 
-    $modifier = lib::create( 'database\modifier' );
-    $modifier->where( 'tid', '=', $sub_select, false );
-    $last_token = $tokens_class_name::db()->get_one( sprintf(
-      'SELECT token FROM %s %s', $tokens_class_name::get_table_name(), $modifier->get_sql() ) );
+    $assignment_list = 
+      lib::create( 'business\session' )->get_user()->get_assignment_list( $modifier );
+    if( 0 < count( $assignment_list ) ) 
+    {
+      $db_assignment = current( $assignment_list );
+      $postfix = '_'.str_pad( $db_assignment->id, 7, '0', STR_PAD_LEFT );
+    }   
+    else // create an counter as a postfix
+    {   
+      $modifier = lib::create( 'database\modifier' );
+      $modifier->where( 'token', 'LIKE', $db_participant->uid.'_NA%' );
+      $sub_select = sprintf(
+        '( SELECT MAX(tid) FROM %s %s )', $tokens_class_name::get_table_name(), $modifier->get_sql() );
 
-    $postfix = $last_token ? strstr( $last_token, '_' ) : '_0001';
-    $postfix++;
+      $modifier = lib::create( 'database\modifier' );
+      $modifier->where( 'tid', '=', $sub_select, false );
+      $last_token = $tokens_class_name::db()->get_one( sprintf(
+        'SELECT token FROM %s %s', $tokens_class_name::get_table_name(), $modifier->get_sql() ) );
+
+      $postfix = $last_token ? strstr( $last_token, '_' ) : '_NA00000';
+      $postfix++;
+    }   
 
     $token .= $postfix;
     return $token;
