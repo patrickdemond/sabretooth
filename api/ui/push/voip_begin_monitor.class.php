@@ -38,6 +38,14 @@ class voip_begin_monitor extends \cenozo\ui\push
   {
     parent::execute();
 
+    $db_assignment = lib::create( 'business\session' )->get_current_assignment();
+    if( is_null( $db_assignment ) )
+      throw lib::create( 'exception\notice',
+        'You must be in an assignment to start a recording.',
+        __METHOD__ );
+
+    $db_participant = $db_assignment->get_interview()->get_participant();
+
     // get the highest ranking recording for this interview
     $modifier = lib::create( 'database\modifier' );
     $modifier->where( 'participant_id', '=', $db_participant->id );
