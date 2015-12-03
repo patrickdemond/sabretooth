@@ -23,21 +23,19 @@ class recording extends \cenozo\database\record
    */
   public function get_filename()
   {
-    // make sure the recording has the interview set
-    if( is_null( $this->interview_id ) )
+    // make sure the recording has the participant set
+    if( is_null( $this->participant_id ) )
     {
       log::warning(
-        'Tried to get filename of recording without both interview_id.' );
+        'Tried to get filename of recording without both participant_id.' );
       return NULL;
     }
     
-    $padded_interview_id = str_pad( $this->interview_id, 7, '0', STR_PAD_LEFT );
+    $uid = $this->get_participant()->uid;
     $padded_rank = str_pad( is_null( $this->rank ) ? 1 : $this->rank, 2, '0', STR_PAD_LEFT );
-    $filename = sprintf( '%s/%s/%s_%s-%s',
-                         substr( $padded_interview_id, 0, 3 ),
-                         substr( $padded_interview_id, 3, 2 ),
-                         substr( $padded_interview_id, 5 ),
-                         is_null( $this->assignment_id ) ? 0 : $this->assignment_id,
+    $filename = sprintf( '%s/%s-%s',
+                         substr( $uid, 0, 2 ),
+                         substr( $uid, 2 ),
                          $padded_rank );
     
     return $filename;

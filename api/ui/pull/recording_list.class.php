@@ -102,21 +102,6 @@ class recording_list extends \cenozo\ui\pull\base_list
   }
 
   /**
-   * Extending the parent record to add the recording's url
-   * @author Patrick Emond <emondpd@mcmaster.ca>
-   * @param database\record $record
-   * @return array
-   * @access protected
-   */
-  protected function process_record( $record )
-  {
-    $item = parent::process_record( $record );
-    if( defined( 'VOIP_MONITOR_URL' ) )
-      $item['url'] = sprintf( '%s/%s-out.wav', VOIP_MONITOR_URL, $record->get_filename() );
-    return $item;
-  }
-
-  /**
    * The interview to restrict to (based on the qnaire and participant)
    * @var database\interview
    * @access protected

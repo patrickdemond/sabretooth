@@ -45,7 +45,7 @@ $SETTINGS['voip']['url'] = 'http://localhost:8088/mxml';
 $SETTINGS['voip']['username'] = '';
 $SETTINGS['voip']['password'] = '';
 $SETTINGS['voip']['prefix'] = '';
-$SETTINGS['voip']['monitor'] = '';
+$SETTINGS['voip']['monitor'] = '/tmp';
 
 // IVR setup
 $SETTINGS['ivr']['enabled'] = false;

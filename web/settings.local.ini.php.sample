@@ -42,4 +42,4 @@ $SETTINGS['voip']['url'] = 'http://%s:8088/mxml'; // %s will be replaced with th
 $SETTINGS['voip']['username'] = 'put your asterisk username here';
 $SETTINGS['voip']['password'] = 'put your asterisk password here';
 $SETTINGS['voip']['prefix'] = '00';
-$SETTINGS['voip']['monitor'] = 'monitor';
+$SETTINGS['path']['monitor'] = '/path/to/recording/files';

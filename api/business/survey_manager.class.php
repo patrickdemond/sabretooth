@@ -298,7 +298,7 @@ class survey_manager extends \cenozo\singleton
           }
         }
 
-        // complete the interview and update the recording list if all phases are complete
+        // complete the interview
         if( false === $this->current_sid ) $db_interview->complete();
       }
     }
