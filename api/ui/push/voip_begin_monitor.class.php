@@ -46,7 +46,7 @@ class voip_begin_monitor extends \cenozo\ui\push
 
     $db_participant = $db_assignment->get_interview()->get_participant();
 
-    // get the highest ranking recording for this interview
+    // get the highest ranking recording for this participant
     $modifier = lib::create( 'database\modifier' );
     $modifier->where( 'participant_id', '=', $db_participant->id );
     $max_rank = lib::create( 'business\session' )->get_database()->get_one(
