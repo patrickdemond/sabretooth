@@ -15,8 +15,8 @@ $SETTINGS['general']['development_mode'] = true;
 $SETTINGS['general']['machine_user'] = 'put machine user name here';
 $SETTINGS['general']['machine_password'] = 'put machine password here';
 
-// the survey ID of the alternate contact script (comment out if the script is unavailable)
-$SETTINGS['general']['secondary_survey'] = 0;
+// the survey ID of the proxy survey (comment out if the script is unavailable)
+$SETTINGS['general']['proxy_survey'] = 0;
 
 // the file path to the framework and application
 $SETTINGS['path']['CENOZO'] = '/path/to/cenozo';

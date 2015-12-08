@@ -17,7 +17,7 @@ CREATE PROCEDURE patch_recording()
       FROM information_schema.COLUMNS
       WHERE TABLE_SCHEMA = DATABASE()
       AND TABLE_NAME = "recording"
-      AND COLUMN_NAME = "participant" );
+      AND COLUMN_NAME = "participant_id" );
     IF @test = 0 THEN
       SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
       SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;

@@ -47,13 +47,6 @@
           }
         } );
 
-        {% if allow_secondary %}
-          // secondary contact button
-          $( "#{{ widget.full }}__secondary" ).click( function() {
-            slot_load( 'main', 'participant', 'secondary', { id: {{ participant_id }} } );
-          } );
-        {% endif %}
-
         // view participant button
         $( "#{{ widget.full }}__view_participant" ).click( function() {
           slot_load( "{{ widget.full }}", "participant", "view", { id: {{ participant_id }} } );
@@ -298,16 +291,6 @@
       </table>
       
       <table class="spacer" cellpadding="4">
-        {% if allow_secondary %}
-          <tr>
-          <td align="left"></td>
-            <td align="right">
-              <button style="width: 180px;"
-                      id="{{ widget.full }}__secondary"
-                      {{ allow_call or on_call ? '' : 'disabled' }}>Secondary Contact(s)</button>
-            </td>
-          </tr>
-        {% endif %}
         <tr>
           <td align="left">
             <button style="width: 180px;"

@@ -246,14 +246,10 @@ class session extends \cenozo\business\session
       $_SESSION['slot'][$slot]['stack']['widgets'] = array();
     }
 
-    // kill the withdraw and secondary contact cookies in case they exist
+    // kill withdraw and proxy cookies in case they exist
     setcookie( 'withdrawing_participant', NULL, time() - 3600, COOKIE_PATH );
     setcookie( 'proxying_participant', NULL, time() - 3600, COOKIE_PATH );
     setcookie( 'proxying_token', NULL, time() - 3600, COOKIE_PATH );
-    setcookie( 'secondary_id', NULL, time() - 3600, COOKIE_PATH );
-    setcookie( 'secondary_participant_id', NULL, time() - 3600, COOKIE_PATH );
-    setcookie( 'secondary_participant_first_name', NULL, time() - 3600, COOKIE_PATH );
-    setcookie( 'secondary_participant_last_name', NULL, time() - 3600, COOKIE_PATH );
 
     $this->update_slot_cookies();
   }

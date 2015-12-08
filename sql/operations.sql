@@ -187,8 +187,6 @@ VALUES( "push", "participant", "delete_callback", true, "Remove a participant's 
 INSERT INTO operation( type, subject, name, restricted, description )
 VALUES( "push", "participant", "delete_ivr_appointment", true, "Remove a participant's IVR appointment." );
 INSERT INTO operation( type, subject, name, restricted, description )
-VALUES( "widget", "participant", "secondary", true, "Lists a participant's alternates for sourcing purposes." );
-INSERT INTO operation( type, subject, name, restricted, description )
 VALUES( "pull", "participant", "tree", true, "Returns the number of participants for every node of the participant tree." );
 INSERT INTO operation( type, subject, name, restricted, description )
 VALUES( "widget", "participant", "tree", true, "Displays participants in a tree format, revealing which queue the belong to." );

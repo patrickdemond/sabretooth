@@ -31,7 +31,6 @@ $SETTINGS['path']['LIMESURVEY'] = '/var/www/limesurvey';
 $SETTINGS['url']['LIMESURVEY'] = '../limesurvey';
 
 // the survey ID of the alternate contact script (comment out if the script is unavailable)
-$SETTINGS['general']['secondary_survey'] = NULL;
 $SETTINGS['general']['proxy_survey'] = NULL;
 
 // additional javascript libraries

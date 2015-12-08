@@ -281,17 +281,6 @@ class operator_assignment extends \cenozo\ui\widget
       // they have made at least one call or the interview is completed
       $this->set_variable( 'allow_end_assignment',
         !$on_call && ( 0 < $current_calls || $db_interview->completed ) );
-
-      $allow_secondary = false;
-      $max_failed_calls = $setting_manager->get_setting( 'calling', 'max failed calls' );
-      if( $max_failed_calls <= $db_interview->get_failed_call_count() )
-      {
-        $db_operation =
-          $operation_class_name::get_operation( 'widget', 'participant', 'secondary' );
-        if( lib::create( 'business\session' )->is_allowed( $db_operation ) )
-          $allow_secondary = true;
-      }
-      $this->set_variable( 'allow_secondary', $allow_secondary );
     }
   }
 }

@@ -11,15 +11,6 @@
   {{ parent() }}
   <script type="text/javascript">
     $( function() {
-      {% if allow_secondary %}
-        // secondary button
-        $( "#{{ widget.full }}__secondary" ).click( function() {
-          window.location.reload();
-          // force the secondary list to be loaded in the main slot
-          slot_load( 'main', 'participant', 'secondary', { id: {{ id }} } );
-        } );
-      {% endif %}
-
       // withdraw button
       $( "#{{ widget.full }}__withdraw" ).click( function() {
         if( ajax_push( "participant", "withdraw",
