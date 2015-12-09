@@ -33,10 +33,7 @@ class recording extends \cenozo\database\record
     
     $uid = $this->get_participant()->uid;
     $padded_rank = str_pad( is_null( $this->rank ) ? 1 : $this->rank, 2, '0', STR_PAD_LEFT );
-    $filename = sprintf( '%s/%s-%s',
-                         substr( $uid, 0, 2 ),
-                         substr( $uid, 2 ),
-                         $padded_rank );
+    $filename = sprintf( '%s/%s', $uid, $padded_rank );
     
     return $filename;
   }
