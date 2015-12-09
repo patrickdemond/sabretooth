@@ -154,7 +154,7 @@ class interview_list extends \cenozo\ui\pull\base_list
       // instead of getting the interview's details, get the participant uid and the qnaire's token
       $item = array(
         'uid' => $record->get_participant()->uid,
-        'token' => $tokens_class_name::determine_token_string( $record ) );
+        'token' => $tokens_class_name::determine_token_string( $record->get_participant(), false ) );
     }
 
     return $item;

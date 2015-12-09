@@ -91,14 +91,14 @@ class withdraw_manager extends \cenozo\singleton
       // delete the script
       $tokens_class_name::set_sid( $withdraw_sid );
       $tokens_mod = lib::create( 'database\modifier' );
-      $tokens_mod->where( 'token', '=', $db_participant->uid );
+      $tokens_class_name::where_token( $tokens_mod, $db_participant, false );
       foreach( $tokens_class_name::select( $tokens_mod ) as $db_tokens ) $db_tokens->delete();
 
       // delete the token
       $survey_class_name::set_sid( $withdraw_sid );
-      $scripts_mod = lib::create( 'database\modifier' );
-      $scripts_mod->where( 'token', '=', $db_participant->uid );
-      foreach( $survey_class_name::select( $scripts_mod ) as $db_survey ) $db_survey->delete();
+      $survey_mod = lib::create( 'database\modifier' );
+      $tokens_class_name::where_token( $survey_mod, $db_participant, false );
+      foreach( $survey_class_name::select( $survey_mod ) as $db_survey ) $db_survey->delete();
     }   
 
     $db_participant->withdraw_letter = NULL;
@@ -126,9 +126,8 @@ class withdraw_manager extends \cenozo\singleton
     $tokens_class_name::set_sid( $withdraw_sid );
 
     // get the withdraw token
-    $token = $db_participant->uid;
     $tokens_mod = lib::create( 'database\modifier' );
-    $tokens_mod->where( 'token', '=', $token );
+    $tokens_class_name::where_token( $tokens_mod, $db_participant, false );
     $tokens_list = $tokens_class_name::select( $tokens_mod );
     if( 0 == count( $tokens_list ) )
       throw lib::create( 'exception\runtime',
@@ -164,7 +163,7 @@ class withdraw_manager extends \cenozo\singleton
           {   
             // from here we need to know whether default was applied or not
             $survey_mod = lib::create( 'database\modifier' );
-            $survey_mod->where( 'token', '=', $token );
+            $tokens_class_name::where_token( $survey_mod, $db_participant, false );
             $survey_list = $survey_class_name::select( $survey_mod );
             $db_survey = current( $survey_list );
  

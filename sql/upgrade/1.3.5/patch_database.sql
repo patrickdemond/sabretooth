@@ -12,4 +12,6 @@ SOURCE recording.sql
 
 SOURCE update_version_number.sql
 
+SELECT "NOTE: Make sure to run limesurvey.php" AS "";
+
 COMMIT;

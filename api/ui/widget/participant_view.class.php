@@ -69,7 +69,7 @@ class participant_view extends \cenozo\ui\widget\participant_view
 
     $session =lib::create( 'business\session' );
     $withdraw_manager = lib::create( 'business\withdraw_manager' );
-    $proxy_manager = lib::create( 'business\proxy_manager' );
+    $setting_manager = lib::create( 'business\setting_manager' );
     $operation_class_name = lib::get_class_name( 'database\operation' );
     $db_participant = $this->get_record();
 
@@ -154,15 +154,19 @@ class participant_view extends \cenozo\ui\widget\participant_view
     }
 
     // add a proxy button if there is a proxy script set up
-    if( !is_null( $proxy_manager->get_proxy_sid( $db_participant ) ) )
+    $proxy_survey = $setting_manager->get_setting( 'general', 'proxy_survey' );
+    if( !is_null( $proxy_survey ) )
     {
       // add an action to proxy the participant
       $db_operation = $operation_class_name::get_operation( 'widget', 'participant', 'proxy' );
       if( $session->is_allowed( $db_operation ) )
+      {
+        $tokens_class_name = lib::get_class_name( 'database\limesurvey\tokens' );
+        $tokens_class_name::set_sid( $proxy_survey );
         $this->add_action( 'proxy', 'Proxy', NULL, 'Runs the proxy script.' );
-
-      // determine what the next proxy token would be
-      $this->set_variable( 'next_proxy_token', $proxy_manager->generate_token( $db_participant ) );
+        $this->set_variable( 'proxying_token',
+          $tokens_class_name::determine_token_string( $db_participant, true ) );
+      }
     }
   }
 

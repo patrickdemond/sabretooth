@@ -71,22 +71,18 @@ class user extends \cenozo\database\user
     $modifier->where( 'interview.qnaire_id', '=', $db_qnaire->id );
 
     // get the list of all interviews related to this user
-    $interview_id_list = static::db()->get_col(
-      'SELECT interview.id '.
-      'FROM interview '.
+    $token_list = static::db()->get_col(
+      'SELECT uid '.
+      'FROM participant '.
+      'JOIN interview ON participant.id = interview.participant_id '.
       'JOIN interview_last_assignment ON interview.id = interview_last_assignment.interview_id '.
       'JOIN assignment ON interview_last_assignment.assignment_id = assignment.id '.
       $modifier->get_sql() );
 
     // determine the time for all interviews in the list
     $time = 0;
-    if( 0 < count( $interview_id_list ) )
+    if( 0 < count( $token_list ) )
     {
-      // Build a token list from the interview id list
-      // (we're only looking for non-repeating phases, so all tokens have 0 for the assignment id)
-      $token_list = array();
-      foreach( $interview_id_list as $interview_id ) $token_list[] = $interview_id.'_0';
-
       // get the times for all interviews
       $phase_mod = lib::create( 'database\modifier' );
       $phase_mod->where( 'repeated', '=', false );

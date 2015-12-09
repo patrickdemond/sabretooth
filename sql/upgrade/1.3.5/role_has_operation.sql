@@ -40,12 +40,16 @@ CREATE PROCEDURE patch_role_has_operation()
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
 
-    SELECT "Removing old operations from roles" AS "";
-    DELETE FROM role_has_operation
-    WHERE operation_id = ( SELECT id FROM operation WHERE name = "secondary" );
-
   END //
 DELIMITER ;
 
 CALL patch_role_has_operation();
 DROP PROCEDURE IF EXISTS patch_role_has_operation;
+
+SELECT "Removing old operations from roles" AS "";
+DELETE FROM role_has_operation
+WHERE operation_id IN (
+  SELECT id FROM operation
+  WHERE name = "secondary"
+  OR subject = "mailout_required"
+);

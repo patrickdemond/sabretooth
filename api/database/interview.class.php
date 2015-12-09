@@ -69,21 +69,15 @@ class interview extends \cenozo\database\has_note
     }
    
     $tokens_class_name = lib::get_class_name( 'database\limesurvey\tokens' );
-    $tokens_class_name::set_sid( $db_phase->sid );
-    $survey_mod = lib::create( 'database\modifier' );
-    $survey_mod->where( 'token', '=',
-      $tokens_class_name::determine_token_string( $this, $db_assignment ) );
-
     $survey_class_name = lib::get_class_name( 'database\limesurvey\survey' );
+
+    $tokens_class_name::set_sid( $db_phase->sid );
     $survey_class_name::set_sid( $db_phase->sid );
+
+    $survey_mod = lib::create( 'database\modifier' );
+    $tokens_class_name::where_token( $survey_mod, $this->get_participant(), $db_phase->repeated );
     $survey_list = $survey_class_name::select( $survey_mod );
     if( 0 == count( $survey_list ) ) return 0.0;
-
-    if( 1 < count( $survey_list ) ) log::alert( sprintf(
-      'There are %d surveys using the same token (%s)! for SID %d',
-      count( $survey_list ),
-      $token,
-      $db_phase->sid ) );
 
     $db_survey = current( $survey_list );
 
@@ -149,6 +143,7 @@ class interview extends \cenozo\database\has_note
     
     // update all uncomplete tokens and surveys associated with this interview which are
     // associated with phases which are not repeated (tokens should not include assignments)
+    $db_participant = $this->get_participant();
     $phase_mod = lib::create( 'database\modifier' );
     $phase_mod->where( 'repeated', '!=', true );
     $tokens_class_name = lib::get_class_name( 'database\limesurvey\tokens' );
@@ -158,8 +153,7 @@ class interview extends \cenozo\database\has_note
       // update tokens
       $tokens_class_name::set_sid( $db_phase->sid );
       $tokens_mod = lib::create( 'database\modifier' );
-      $tokens_mod->where( 'token', '=',
-        $tokens_class_name::determine_token_string( $this ) );
+      $tokens_class_name::where_token( $tokens_mod, $db_participant, $db_phase->repeated );
       $tokens_mod->where( 'completed', '=', 'N' );
       foreach( $tokens_class_name::select( $tokens_mod ) as $db_tokens )
       {
@@ -171,8 +165,7 @@ class interview extends \cenozo\database\has_note
       // update surveys
       $survey_class_name::set_sid( $db_phase->sid );
       $survey_mod = lib::create( 'database\modifier' );
-      $survey_mod->where( 'token', '=',
-        $tokens_class_name::determine_token_string( $this ) );
+      $tokens_class_name::where_token( $survey_mod, $db_participant, $db_phase->repeated );
       $survey_mod->where( 'submitdate', '=', NULL );
 
       // get the last page for this survey
@@ -210,6 +203,7 @@ class interview extends \cenozo\database\has_note
     
     // delete all tokens and surveys associated with this interview which are
     // associated with phases which are not repeated (tokens should not include assignments)
+    $db_participant = $this->get_participant();
     $phase_mod = lib::create( 'database\modifier' );
     $phase_mod->where( 'repeated', '!=', true );
     $tokens_class_name = lib::get_class_name( 'database\limesurvey\tokens' );
@@ -219,8 +213,7 @@ class interview extends \cenozo\database\has_note
       // delete tokens
       $tokens_class_name::set_sid( $db_phase->sid );
       $tokens_mod = lib::create( 'database\modifier' );
-      $tokens_mod->where( 'token', '=',
-        $tokens_class_name::determine_token_string( $this ) );
+      $tokens_class_name::where_token( $tokens_mod, $db_participant, $db_phase->repeated );
       foreach( $tokens_class_name::select( $tokens_mod ) as $db_tokens )
       {
         $db_tokens->completed = 'N';
@@ -231,8 +224,7 @@ class interview extends \cenozo\database\has_note
       // delete surveys
       $survey_class_name::set_sid( $db_phase->sid );
       $survey_mod = lib::create( 'database\modifier' );
-      $survey_mod->where( 'token', '=',
-        $tokens_class_name::determine_token_string( $this ) );
+      $tokens_class_name::where_token( $survey_mod, $db_participant, $db_phase->repeated );
 
       foreach( $survey_class_name::select( $survey_mod ) as $db_survey )
       {
