@@ -138,7 +138,7 @@ class patch
     $sabretooth_database_name = sprintf(
       '%s%s',
       $this->settings['db']['database_prefix'],
-      $this->settings['general']['application_name'] );
+      $this->settings['general']['service_name'] );
     $limesurvey_database_name = $this->settings['survey_db']['database'];
 
     // open connection to the database
@@ -207,6 +207,7 @@ class patch
         if( false === $db->Execute( $sql ) )
         {
           error( 'There was a problem populating the first temporary table, quitting' );
+          error( $sql );
           die();
         }
 
