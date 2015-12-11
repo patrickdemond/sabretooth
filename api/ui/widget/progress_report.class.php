@@ -40,7 +40,6 @@ class progress_report extends base_report
 
     $this->add_restriction( 'site' );
     $this->add_restriction( 'qnaire' );
-    $this->add_restriction( 'dates' );
     
     $this->set_variable( 'description',
       'This report lists all participants who have completed at least one part of their '.

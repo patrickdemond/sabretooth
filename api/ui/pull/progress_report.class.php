@@ -46,31 +46,6 @@ class progress_report extends \cenozo\ui\pull\base_report
     $site_mod = lib::create( 'database\modifier' );
     if( $restrict_site_id ) $site_mod->where( 'id', '=', $restrict_site_id );
     
-    $restrict_start_date = $this->get_argument( 'restrict_start_date' );
-    $restrict_end_date = $this->get_argument( 'restrict_end_date' );
-    $now_datetime_obj = util::get_datetime_object();
-    $start_datetime_obj = NULL;
-    $end_datetime_obj = NULL;
-    
-    if( $restrict_start_date )
-    {
-      $start_datetime_obj = util::get_datetime_object( $restrict_start_date );
-      if( $start_datetime_obj > $now_datetime_obj )
-        $start_datetime_obj = clone $now_datetime_obj;
-    }
-    if( $restrict_end_date )
-    {
-      $end_datetime_obj = util::get_datetime_object( $restrict_end_date );
-      if( $end_datetime_obj > $now_datetime_obj )
-        $end_datetime_obj = clone $now_datetime_obj;
-    }
-    if( $restrict_start_date && $restrict_end_date && $end_datetime_obj < $start_datetime_obj )
-    {
-      $temp_datetime_obj = clone $start_datetime_obj;
-      $start_datetime_obj = clone $end_datetime_obj;
-      $end_datetime_obj = clone $temp_datetime_obj;
-    }
-
     $db_qnaire = lib::create( 'database\qnaire', $this->get_argument( 'restrict_qnaire_id' ) );
 
     $this->add_title( sprintf( 'Participant progress for '.  'the %s interview', $db_qnaire->name ) ) ;
@@ -90,10 +65,20 @@ class progress_report extends \cenozo\ui\pull\base_report
     $phase_mod->order( 'rank' );
     $phase_list = $db_qnaire->get_phase_list( $phase_mod );
 
-    $base_mod = lib::create( 'database\modifier' );
-    $base_mod->order( 'uid' );
     $phase_selects = array();
     $phase_joins = array();
+
+    $base_mod = lib::create( 'database\modifier' );
+    $base_mod->order( 'uid' );
+    $join_mod = lib::create( 'database\modifier' );
+    $join_mod->where( 'participant.id', '=', 'service_has_participant.participant_id', false );
+    $join_mod->where( 'service_has_participant.service_id', '=', $db_service->id );
+    $base_mod->join_modifier( 'service_has_participant', $join_mod );
+    $join_mod = lib::create( 'database\modifier' );
+    $join_mod->where( 'participant.id', '=', 'participant_site.participant_id', false );
+    $join_mod->where( 'participant_site.service_id', '=', $db_service->id );
+    $base_mod->join_modifier( 'participant_site', $join_mod );
+    $base_mod->where( 'service_has_participant.datetime', '!=', NULL );
     foreach( $phase_list as $db_phase )
     {
       $phase_selects[] = sprintf( 'survey_%s.submitdate AS part_%d', $db_phase->sid, $db_phase->rank );
@@ -114,11 +99,8 @@ class progress_report extends \cenozo\ui\pull\base_report
       $sql = sprintf(
         'SELECT uid, %s '.
         'FROM participant '.
-        'JOIN participant_site ON participant.id = participant_site.participant_id '.
-        'AND participant_site.service_id = %s '.
         '%s',
         implode( ', ', $phase_selects ),
-        $db_service->id,
         $modifier->get_sql() );
 
       $contents = array();
