@@ -39,9 +39,32 @@ class site_feed extends \cenozo\ui\pull\base_feed
 
     $daylight_savings = '1' == util::get_datetime_object()->format( 'I' );
     $site_id = $this->get_argument( 'site_id', false );
-    $db_site = $site_id
-             ? lib::create( 'database\site', $site_id )
-             : lib::create( 'business\session' )->get_site();
+    $base_start_datetime_obj = util::get_datetime_object( $this->start_datetime );
+    $base_end_datetime_obj = util::get_datetime_object( $this->end_datetime );
+    if( $site_id )
+    {
+      $db_site = lib::create( 'database\site', $site_id );
+      $db_user_site = lib::create( 'business\session' )->get_site();
+      $time_diff = $db_site->get_time_diff() - $db_user_site->get_time_diff();
+      if( $time_diff )
+      {
+        $interval = sprintf( 'PT%dH', abs( $time_diff ) );
+        if( 0 > $time_diff )
+        {
+          $base_start_datetime_obj->add( new \DateInterval( $interval ) );
+          $base_end_datetime_obj->add( new \DateInterval( $interval ) );
+        }
+        else
+        {
+          $base_start_datetime_obj->sub( new \DateInterval( $interval ) );
+          $base_end_datetime_obj->sub( new \DateInterval( $interval ) );
+        }
+      }
+    }
+    else
+    {
+      $db_site = lib::create( 'business\session' )->get_site();
+    }
 
     $setting_manager = lib::create( 'business\setting_manager' );
     $full_duration = $setting_manager->get_setting( 'appointment', 'full duration', $db_site );
@@ -101,8 +124,8 @@ class site_feed extends \cenozo\ui\pull\base_feed
     // fill in the shifts (which override shift templates for that day)
     $modifier = lib::create( 'database\modifier' );
     $modifier->where( 'site_id', '=', $db_site->id );
-    $modifier->where( 'start_datetime', '<', $this->end_datetime );
-    $modifier->where( 'end_datetime', '>', $this->start_datetime );
+    $modifier->where( 'start_datetime', '<', $base_end_datetime_obj->format( 'Y-m-d H:i:s' ) );
+    $modifier->where( 'end_datetime', '>', $base_start_datetime_obj->format( 'Y-m-d H:i:s' ) );
     $modifier->order( 'start_datetime' );
     $shift_class_name = lib::get_class_name( 'database\shift' );
     foreach( $shift_class_name::select( $modifier ) as $db_shift )
@@ -141,15 +164,14 @@ class site_feed extends \cenozo\ui\pull\base_feed
     $modifier = lib::create( 'database\modifier' );
     $modifier->where( 'participant_site.site_id', '=', $db_site->id );
     $modifier->where( 'reached', '=', NULL );
-    $modifier->where( 'datetime', '>=', $this->start_datetime );
-    $modifier->where( 'datetime', '<', $this->end_datetime );
+    $modifier->where( 'datetime', '>=', $base_start_datetime_obj->format( 'Y-m-d H:i:s' ) );
+    $modifier->where( 'datetime', '<', $base_end_datetime_obj->format( 'Y-m-d H:i:s' ) );
     $modifier->order( 'datetime' );
     $appointment_class_name = lib::get_class_name( 'database\appointment' );
     foreach( $appointment_class_name::select( $modifier ) as $db_appointment )
     {
       // determine the appointment interval
-      $interval = sprintf(
-        'PT%dM', $db_appointment->type == 'full' ? $full_duration : $half_duration );
+      $interval = sprintf( 'PT%dM', $db_appointment->type == 'full' ? $full_duration : $half_duration );
 
       $appointment_datetime_obj = util::get_datetime_object( $db_appointment->datetime );
 
@@ -167,6 +189,12 @@ class site_feed extends \cenozo\ui\pull\base_feed
       $appointment_datetime_obj->add( new \DateInterval( $interval ) );
       $end_time_as_int = intval( $appointment_datetime_obj->format( 'Gi' ) );
       if( 0 == $end_time_as_int ) $end_time_as_int = 2400;
+
+      if( $time_diff )
+      {
+        $start_time_as_int += 100 * $time_diff;
+        $end_time_as_int += 100 * $time_diff;
+      }
 
       if( !array_key_exists( $start_time_as_int, $diffs ) ) $diffs[ $start_time_as_int ] = 0;
       $diffs[ $start_time_as_int ]--;
@@ -204,7 +232,6 @@ class site_feed extends \cenozo\ui\pull\base_feed
     $start_time = false;
     $available = 0;
     $this->data = array();
-    $site_offset = $db_site->get_time_diff();
     foreach( $days as $date => $day )
     {
       foreach( $day['times'] as $time => $number )
@@ -215,6 +242,7 @@ class site_feed extends \cenozo\ui\pull\base_feed
                   calendar (mcmaster viewing dalhousie's site calendar, for instance)
             ALSO SEE ABOVEyy
         // convert the time to the user's site's timezone
+        $site_offset = $db_site->get_time_diff();
         $time -= ( 100 * $site_offset );
         */
 
