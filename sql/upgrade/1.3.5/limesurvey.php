@@ -172,6 +172,38 @@ class patch
 
     foreach( $result as $row )
     {
+      out( sprintf( 'Creating token index in survey_%s', $row['sid'] ) );
+
+      $sql = sprintf(
+        'SELECT COUNT(*) '.
+        'FROM information_schema.statistics '.
+        'WHERE table_schema = "%s" '.
+        'AND table_name = "survey_%s" '.
+        'AND column_name = "token"',
+        $limesurvey_database_name,
+        $row['sid'] );
+
+      $count = $db->GetOne( $sql );
+      if( false === $count )
+      {
+        error( 'Problem testing for token index, quitting' );
+        die();
+      }
+
+      if( 0 == $count )
+      {
+        $sql = sprintf(
+          'ALTER TABLE %s.survey_%s ADD KEY tokens( token )',
+          $limesurvey_database_name,
+          $row['sid'] );
+
+        if( false === $db->Execute( $sql ) )
+        {
+          error( 'Problem creating token index, quitting' );
+          die();
+        }
+      }
+        
       if( $row['repeated'] )
       {
         out( sprintf( 'Creating temporary tables for repeating script %s', $row['sid'] ) );
@@ -254,36 +286,6 @@ class patch
         out( sprintf( 'Finished converting tokens_%s, %s rows affected', $row['sid'], $db->Affected_Rows() ) );
         out( sprintf( 'Converting tokens in survey_%s (repeating)', $row['sid'] ) );
 
-        $sql = sprintf(
-          'SELECT COUNT(*) '.
-          'FROM information_schema.statistics '.
-          'WHERE table_schema = "%s" '.
-          'AND table_name = "survey_%s" '.
-          'AND index_name = "tokens"',
-          $limesurvey_database_name,
-          $row['sid'] );
-
-        $count = $db->GetOne( $sql );
-        if( false === $count )
-        {
-          error( 'Problem testing for token index, quitting' );
-          die();
-        }
-
-        if( 0 == $count )
-        {
-          $sql = sprintf(
-            'ALTER TABLE %s.survey_%s ADD KEY tokens( token )',
-            $limesurvey_database_name,
-            $row['sid'] );
-
-          if( false === $db->Execute( $sql ) )
-          {
-            error( 'Problem creating token index, quitting' );
-            die();
-          }
-        }
-          
         $sql = sprintf(
           'UPDATE %s.survey_%s tokens '.
           'JOIN temp ON tokens.token = temp.token '.
