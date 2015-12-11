@@ -254,6 +254,36 @@ class patch
         out( sprintf( 'Converting tokens in survey_%s (repeating)', $row['sid'] ) );
 
         $sql = sprintf(
+          'SELECT COUNT(*) '.
+          'FROM information_schema.statistics '.
+          'WHERE table_schema = "%s" '.
+          'AND table_name = "survey_%s" '.
+          'AND index_name = "tokens"',
+          $limesurvey_database_name,
+          $row['sid'] );
+
+        $count = $db->GetOne( $sql );
+        if( false === $count )
+        {
+          error( 'Problem testing for token index, quitting' );
+          die();
+        }
+
+        if( 0 == $count )
+        {
+          $sql = sprintf(
+            'ALTER TABLE %s.survey_%s ADD KEY tokens( token )',
+            $limesurvey_database_name,
+            $row['sid'] );
+
+          if( false === $db->Execute( $sql ) )
+          {
+            error( 'Problem creating token index, quitting' );
+            die();
+          }
+        }
+          
+        $sql = sprintf(
           'UPDATE %s.survey_%s tokens '.
           'JOIN temp ON tokens.token = temp.token '.
           'JOIN %s.interview ON temp.interview_id = interview.id '.
