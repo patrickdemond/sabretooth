@@ -348,6 +348,30 @@ class patch
 
         out( sprintf( 'Finished converting surveys_%s, %s rows affected', $row['sid'], $db->Affected_Rows() ) );
       }
+
+      out( sprintf( 'Deleting invalid/junk tokens and surveys for %s', $row['sid'] ) );
+
+      $sql = sprintf(
+        'DELETE FROM %s.tokens_%s WHERE token IS NULL OR NOT token REGEXP "^[A-Z][0-9]"',
+        $limesurvey_database_name,
+        $row['sid'] );
+
+      if( false === $db->Execute( $sql ) )
+      {
+        error( 'Problem deleting invalid tokens, quitting' );
+        die();
+      }
+
+      $sql = sprintf(
+        'DELETE FROM %s.survey_%s WHERE token IS NULL OR NOT token REGEXP "^[A-Z][0-9]"',
+        $limesurvey_database_name,
+        $row['sid'] );
+
+      if( false === $db->Execute( $sql ) )
+      {
+        error( 'Problem deleting invalid survey, quitting' );
+        die();
+      }
     }
   }
 }
