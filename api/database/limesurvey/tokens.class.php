@@ -55,7 +55,7 @@ class tokens extends sid_record
     {
       // create an counter as a postfix
       $modifier = lib::create( 'database\modifier' );
-      static::where_token( $modifier, $db_participant->uid, true );
+      static::where_token( $modifier, $db_participant, true );
       $sub_select = sprintf(
         '( SELECT MAX( tid ) AS max_tid FROM %s %s )', 
         static::get_table_name(),
