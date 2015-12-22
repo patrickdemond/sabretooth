@@ -198,7 +198,7 @@ class survey_manager extends \cenozo\singleton
 
             $tokens_class_name::set_sid( $sid );
             $tokens_mod = lib::create( 'database\modifier' );
-            $tokens_class_name::where_token( $tokens_mod, $this->get_participant(), $db_phase->repeated );
+            $tokens_class_name::where_token( $tokens_mod, $db_participant, $db_phase->repeated );
             $db_tokens = current( $tokens_class_name::select( $tokens_mod ) );
     
             if( false === $db_tokens )
