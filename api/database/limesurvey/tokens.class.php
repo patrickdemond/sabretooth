@@ -68,7 +68,7 @@ class tokens extends sid_record
         static::get_table_name(),
         $modifier->get_sql() ) );
 
-      $postfix = (int) $last_token; // will either be a number of false (which will resolve to 0)
+      $postfix = is_null( $last_token ) ? 0 : (int) substr( $last_token, strpos( $last_token, '.' ) + 1 );
       $postfix = str_pad( ++$postfix, static::TOKEN_POSTFIX_LENGTH, 0, STR_PAD_LEFT );
 
       $token .= '.'.$postfix;
