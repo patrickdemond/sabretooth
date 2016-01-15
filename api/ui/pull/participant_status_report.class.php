@@ -305,12 +305,12 @@ class participant_status_report extends \cenozo\ui\pull\base_report
     // has an incomplete interview (negative consent)
     $sub_cat = 'Incomplete interview (negative consent)';
     $extra_sql = sprintf(
-      'JOIN interview '.
+      'LEFT JOIN interview '.
       'ON temp_participant.id = interview.participant_id '.
       'AND interview.qnaire_id = %s ',
       $db_qnaire->id );
     $modifier = lib::create( 'database\modifier' );
-    $modifier->where( 'interview.completed', '=', false );
+    $modifier->where( 'IFNULL( interview.completed, false )', '=', false );
     $modifier->where( 'accept', '=', false );
     $this->set_category_totals( $sub_cat, $extra_sql, $modifier );
 
