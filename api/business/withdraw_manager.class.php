@@ -129,8 +129,8 @@ class withdraw_manager extends \cenozo\singleton
 
     // set the SID for the the survey and tokens records
     $old_tokens_sid = $tokens_class_name::get_sid();
-    $survey_class_name::set_sid( $withdraw_sid );
-    $old_tokens_sid = $tokens_class_name::get_sid();
+    $tokens_class_name::set_sid( $withdraw_sid );
+    $old_survey_sid = $survey_class_name::get_sid();
     $survey_class_name::set_sid( $withdraw_sid );
 
     // get the withdraw token
