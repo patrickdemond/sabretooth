@@ -217,6 +217,9 @@ class survey_manager extends \cenozo\singleton
               $db_surveys = lib::create( 'database\limesurvey\surveys', $sid );
               foreach( $db_surveys->get_token_attribute_names() as $key => $value )
                 $db_tokens->$key = static::get_attribute( $db_participant, $value );
+              
+              // make sure we have the correct sid before proceeding
+              $tokens_class_name::set_sid( $sid );
               $db_tokens->save();
     
               $this->current_sid = $sid;
