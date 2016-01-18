@@ -105,6 +105,6 @@ class user extends \cenozo\database\user
       }
     }
 
-    return array( 'count' => count( $interview_id_list ), 'time' => $time );
+    return array( 'count' => count( $token_list ), 'time' => $time );
   }
 }
