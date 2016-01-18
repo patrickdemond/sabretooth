@@ -196,6 +196,7 @@ class survey_manager extends \cenozo\singleton
               array( $db_phase->id, $db_participant->source_id ) );
             $sid = is_null( $db_source_survey ) ? $db_phase->sid : $db_source_survey->sid;
 
+            $old_sid = $tokens_class_name::get_sid();
             $tokens_class_name::set_sid( $sid );
             $tokens_mod = lib::create( 'database\modifier' );
             $tokens_class_name::where_token( $tokens_mod, $db_participant, $db_phase->repeated );
@@ -217,9 +218,6 @@ class survey_manager extends \cenozo\singleton
               $db_surveys = lib::create( 'database\limesurvey\surveys', $sid );
               foreach( $db_surveys->get_token_attribute_names() as $key => $value )
                 $db_tokens->$key = static::get_attribute( $db_participant, $value );
-              
-              // make sure we have the correct sid before proceeding
-              $tokens_class_name::set_sid( $sid );
               $db_tokens->save();
     
               $this->current_sid = $sid;
@@ -233,6 +231,9 @@ class survey_manager extends \cenozo\singleton
               break;
             }
             // else do not set the current_sid or current_token members!
+
+            // put the old sid back
+            $tokens_class_name::set_sid( $old_sid );
           }
         }
 
@@ -265,6 +266,7 @@ class survey_manager extends \cenozo\singleton
         __METHOD__ );
     $db_surveys = lib::create( 'database\limesurvey\surveys', $withdraw_sid );
 
+    $old_sid = $tokens_class_name::get_sid();
     $tokens_class_name::set_sid( $withdraw_sid );
     $tokens_mod = lib::create( 'database\modifier' );
     $tokens_class_name::where_token( $tokens_mod, $db_participant, false );
@@ -299,6 +301,8 @@ class survey_manager extends \cenozo\singleton
     {
       $withdraw_manager->process( $db_participant );
     }
+
+    $tokens_class_name::set_sid( $old_sid );
   }
 
   /**
@@ -323,6 +327,7 @@ class survey_manager extends \cenozo\singleton
                  $db_participant->uid ),
         __METHOD__ );
     $db_surveys = lib::create( 'database\limesurvey\surveys', $proxy_sid );
+    $old_sid = $tokens_class_name::get_sid();
     $tokens_class_name::set_sid( $proxy_sid );
     
     // only create a new token if there isn't already one in cookies
@@ -361,6 +366,8 @@ class survey_manager extends \cenozo\singleton
       $this->current_token = $token;
     }
     // else do not set the current_sid or current_token members!
+
+    $tokens_class_name::set_sid( $old_sid );
   }
 
   /**
@@ -394,7 +401,9 @@ class survey_manager extends \cenozo\singleton
       $q_title = $parts[2];
 
       // get this participant's survey for the given sid
+      $old_survey_sid = $survey_class_name::get_sid();
       $survey_class_name::set_sid( $sid );
+      $old_tokens_sid = $tokens_class_name::get_sid();
       $tokens_class_name::set_sid( $sid );
       $survey_mod = lib::create( 'database\modifier' );
       $tokens_class_name::where_token( $survey_mod, $db_participant, false );
@@ -405,6 +414,8 @@ class survey_manager extends \cenozo\singleton
         $db_survey = current( $survey_list );
         $value = $db_survey->get_response( $q_title );
       }
+      $survey_class_name::set_sid( $old_survey_sid );
+      $tokens_class_name::set_sid( $old_tokens_sid );
     }
     // check for new participant.opal.* keys
     else if( 1 == preg_match( '/^participant\.opal\./', $key ) )
@@ -606,11 +617,15 @@ class survey_manager extends \cenozo\singleton
               // see if a survey exists for this phase
               // if one does then the participant has provided partial data
               $db_phase = current( $phase_list );
+              $old_survey_sid = $survey_class_name::get_sid();
               $survey_class_name::set_sid( $db_phase->sid );
+              $old_tokens_sid = $tokens_class_name::get_sid();
               $tokens_class_name::set_sid( $db_phase->sid );
               $survey_mod = lib::create( 'database\modifier' );
               $tokens_class_name::where_token( $survey_mod, $db_participant, false );
               if( 0 < $survey_class_name::count( $survey_mod ) ) $provided_data = 'partial';
+              $survey_class_name::set_sid( $old_survey_sid );
+              $tokens_class_name::set_sid( $old_tokens_sid );
             }
           }
         }

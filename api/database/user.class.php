@@ -83,6 +83,8 @@ class user extends \cenozo\database\user
     $time = 0;
     if( 0 < count( $token_list ) )
     {
+      $old_sid = $survey_class_name::get_sid();
+
       // get the times for all interviews
       $phase_mod = lib::create( 'database\modifier' );
       $phase_mod->where( 'repeated', '=', false );
@@ -103,6 +105,8 @@ class user extends \cenozo\database\user
           $time += $survey_class_name::get_total_time( $survey_mod );
         }
       }
+
+      $survey_class_name::set_sid( $old_sid );
     }
 
     return array( 'count' => count( $token_list ), 'time' => $time );

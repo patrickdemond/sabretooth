@@ -70,9 +70,14 @@ class interview extends \cenozo\database\has_note
    
     $tokens_class_name = lib::get_class_name( 'database\limesurvey\tokens' );
     $survey_class_name = lib::get_class_name( 'database\limesurvey\survey' );
+    $timings_class_name = lib::get_class_name( 'database\limesurvey\survey_timings' );
 
+    $old_tokens_sid = $tokens_class_name::get_sid();
     $tokens_class_name::set_sid( $db_phase->sid );
+    $old_tokens_sid = $tokens_class_name::get_sid();
     $survey_class_name::set_sid( $db_phase->sid );
+    $old_timings_sid = $timings_class_name::get_sid();
+    $timings_class_name::set_sid( $db_phase->sid );
 
     $survey_mod = lib::create( 'database\modifier' );
     $tokens_class_name::where_token( $survey_mod, $this->get_participant(), $db_phase->repeated );
@@ -81,12 +86,16 @@ class interview extends \cenozo\database\has_note
 
     $db_survey = current( $survey_list );
 
-    $timings_class_name = lib::get_class_name( 'database\limesurvey\survey_timings' );
-    $timings_class_name::set_sid( $db_phase->sid );
     $timing_mod = lib::create( 'database\modifier' );
     $timing_mod->where( 'id', '=', $db_survey->id );
     $db_timings = current( $timings_class_name::select( $timing_mod ) );
-    return $db_timings ? (float) $db_timings->interviewtime : 0.0;
+    $time = $db_timings ? (float) $db_timings->interviewtime : 0.0;
+
+    $tokens_class_name::set_sid( $old_tokens_sid );
+    $survey_class_name::set_sid( $old_survey_sid );
+    $timings_class_name::set_sid( $old_timings_sid );
+
+    return $time;
   }
 
   /**
@@ -150,8 +159,12 @@ class interview extends \cenozo\database\has_note
     $survey_class_name = lib::get_class_name( 'database\limesurvey\survey' );
     foreach( $this->get_qnaire()->get_phase_list( $phase_mod ) as $db_phase )
     {
-      // update tokens
+      $old_tokens_sid = $tokens_class_name::get_sid();
       $tokens_class_name::set_sid( $db_phase->sid );
+      $old_survey_sid = $survey_class_name::get_sid();
+      $survey_class_name::set_sid( $db_phase->sid );
+
+      // update tokens
       $tokens_mod = lib::create( 'database\modifier' );
       $tokens_class_name::where_token( $tokens_mod, $db_participant, $db_phase->repeated );
       $tokens_mod->where( 'completed', '=', 'N' );
@@ -163,7 +176,6 @@ class interview extends \cenozo\database\has_note
       }
 
       // update surveys
-      $survey_class_name::set_sid( $db_phase->sid );
       $survey_mod = lib::create( 'database\modifier' );
       $tokens_class_name::where_token( $survey_mod, $db_participant, $db_phase->repeated );
       $survey_mod->where( 'submitdate', '=', NULL );
@@ -179,6 +191,9 @@ class interview extends \cenozo\database\has_note
         if( $lastpage ) $db_survey->lastpage = $lastpage;
         $db_survey->save();
       }
+
+      $tokens_class_name::set_sid( $old_tokens_sid );
+      $survey_class_name::set_sid( $old_survey_sid );
     }
 
     // finally, update the record
@@ -210,8 +225,12 @@ class interview extends \cenozo\database\has_note
     $survey_class_name = lib::get_class_name( 'database\limesurvey\survey' );
     foreach( $this->get_qnaire()->get_phase_list( $phase_mod ) as $db_phase )
     {
-      // delete tokens
+      $old_tokens_sid = $tokens_class_name::get_sid();
       $tokens_class_name::set_sid( $db_phase->sid );
+      $old_tokens_sid = $tokens_class_name::get_sid();
+      $survey_class_name::set_sid( $db_phase->sid );
+
+      // delete tokens
       $tokens_mod = lib::create( 'database\modifier' );
       $tokens_class_name::where_token( $tokens_mod, $db_participant, $db_phase->repeated );
       foreach( $tokens_class_name::select( $tokens_mod ) as $db_tokens )
@@ -222,7 +241,6 @@ class interview extends \cenozo\database\has_note
       }
 
       // delete surveys
-      $survey_class_name::set_sid( $db_phase->sid );
       $survey_mod = lib::create( 'database\modifier' );
       $tokens_class_name::where_token( $survey_mod, $db_participant, $db_phase->repeated );
 
@@ -231,6 +249,9 @@ class interview extends \cenozo\database\has_note
         $db_survey->submitdate = NULL;
         $db_survey->save();
       }
+
+      $tokens_class_name::set_sid( $old_tokens_sid );
+      $survey_class_name::set_sid( $old_survey_sid );
     }
 
     // finally, update the record

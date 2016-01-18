@@ -59,8 +59,10 @@ class timing_report extends \cenozo\ui\pull\base_report
       $phase_mod->order( 'rank' );
       foreach( $db_qnaire->get_phase_list() as $db_phase )
       {
+        $old_sid = $survey_timings_class_name::get_sid();
         $survey_timings_class_name::set_sid( $db_phase->sid );
         $averages = $survey_timings_class_name::get_averages( $db_region );
+        $survey_timings_class_name::set_sid( $old_sid );
 
         // skip regions with no data
         if( array_sum( $averages ) )

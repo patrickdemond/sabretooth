@@ -162,10 +162,12 @@ class participant_view extends \cenozo\ui\widget\participant_view
       if( $session->is_allowed( $db_operation ) )
       {
         $tokens_class_name = lib::get_class_name( 'database\limesurvey\tokens' );
+        $old_sid = $tokens_class_name::get_sid();
         $tokens_class_name::set_sid( $proxy_survey );
         $this->add_action( 'proxy', 'Proxy', NULL, 'Runs the proxy script.' );
         $this->set_variable( 'proxying_token',
           $tokens_class_name::determine_token_string( $db_participant, true ) );
+        $tokens_class_name::set_sid( $old_sid );
       }
     }
   }
