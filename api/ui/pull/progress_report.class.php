@@ -79,6 +79,11 @@ class progress_report extends \cenozo\ui\pull\base_report
     $join_mod->where( 'participant_site.service_id', '=', $db_service->id );
     $base_mod->join_modifier( 'participant_site', $join_mod );
     $base_mod->where( 'service_has_participant.datetime', '!=', NULL );
+    $join_mod = lib::create( 'database\modifier' );
+    $join_mod->where( 'participant.id', '=', 'appointment.participant_id', false );
+    $join_mod->where( 'appointment.assignment_id', '=', NULL );
+    $base_mod->join_modifier( 'appointment', $join_mod, 'left' );
+
     foreach( $phase_list as $db_phase )
     {
       $phase_selects[] = sprintf( 'survey_%s.submitdate AS part_%d', $db_phase->sid, $db_phase->rank );
@@ -86,9 +91,13 @@ class progress_report extends \cenozo\ui\pull\base_report
         $limesurvey_database_name.'.survey_'.$db_phase->sid,
         'participant.uid',
         'survey_'.$db_phase->sid.'.token' );
-      $header[] = sprintf( 'Part %d', $db_phase->rank );
+        
+      $header[] = $db_phase->get_survey()->get_title();
       $totals[] = 0;
     }
+
+    $header[] = 'Appointment';
+    $totals[] = 0;
 
     // now create a table for every site included in the report
     foreach( $site_class_name::select( $site_mod ) as $db_site )
@@ -97,7 +106,7 @@ class progress_report extends \cenozo\ui\pull\base_report
       $modifier = clone $base_mod;
       $modifier->where( 'participant_site.site_id', '=', $db_site->id );
       $sql = sprintf(
-        'SELECT uid, %s '.
+        'SELECT uid, %s, appointment.datetime '.
         'FROM participant '.
         '%s',
         implode( ', ', $phase_selects ),
