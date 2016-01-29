@@ -481,7 +481,8 @@ class survey_manager extends \cenozo\singleton
         catch( \cenozo\exception\base_exception $e )
         {
           // ignore argument exceptions (data not found in Opal) and report the rest
-          if( 'argument' != $e->get_type() ) log::warning( $e->get_message() );
+          if( 'notice' == $e->get_type() ) throw $e;
+          else if( 'argument' != $e->get_type() ) log::warning( $e->get_message() );
         }
       }
     }
@@ -658,7 +659,8 @@ class survey_manager extends \cenozo\singleton
         catch( \cenozo\exception\base_exception $e )
         {
           // ignore argument exceptions (data not found in Opal) and report the rest
-          if( 'argument' != $e->get_type() ) log::warning( $e->get_message() );
+          if( 'notice' == $e->get_type() ) throw $e;
+          else if( 'argument' != $e->get_type() ) log::warning( $e->get_message() );
         }
       }
     }
@@ -691,7 +693,8 @@ class survey_manager extends \cenozo\singleton
         catch( \cenozo\exception\base_exception $e )
         {
           // ignore argument exceptions (data not found in Opal) and report the rest
-          if( 'argument' != $e->get_type() ) log::warning( $e->get_message() );
+          if( 'notice' == $e->get_type() ) throw $e;
+          else if( 'argument' != $e->get_type() ) log::warning( $e->get_message() );
         }
       }
     }
@@ -720,7 +723,8 @@ class survey_manager extends \cenozo\singleton
         catch( \cenozo\exception\base_exception $e )
         {
           // ignore argument exceptions (data not found in Opal) and report the rest
-          if( 'argument' != $e->get_type() ) log::warning( $e->get_message() );
+          if( 'notice' == $e->get_type() ) throw $e;
+          else if( 'argument' != $e->get_type() ) log::warning( $e->get_message() );
         }
       }
     }
