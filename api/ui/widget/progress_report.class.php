@@ -40,9 +40,23 @@ class progress_report extends base_report
 
     $this->add_restriction( 'site' );
     $this->add_restriction( 'qnaire' );
+    $this->add_parameter( 'include_withdrawn', 'boolean', 'Include Withdrawn',
+      'Whether to include withdrawn participants in the report.' );
     
     $this->set_variable( 'description',
       'This report lists all participants who have completed at least one part of their '.
       'interview.  It will show the date the participant completed each part of the interview.' );
+  }
+
+  /**
+   * Sets up the operation with any pre-execution instructions that may be necessary.
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @access protected
+   */
+  protected function setup()
+  {
+    parent::setup();
+
+    $this->set_parameter( 'include_withdrawn', false, true );
   }
 }
