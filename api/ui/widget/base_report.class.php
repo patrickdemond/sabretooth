@@ -42,6 +42,7 @@ abstract class base_report extends \cenozo\ui\widget\base_report
     parent::prepare();
 
     $this->restrictions['qnaire'] = false;
+    $this->restrictions['phase'] = false;
   }
 
   /**
@@ -55,13 +56,25 @@ abstract class base_report extends \cenozo\ui\widget\base_report
 
     if( $this->restrictions[ 'qnaire' ] )
     {
+      $qnaire_mod = lib::create( 'database\modifier' );
+      $qnaire_mod->order( 'rank' );
       $qnaire_list = array();
       $class_name = lib::get_class_name( 'database\qnaire' );
-      foreach( $class_name::select() as $db_qnaire )
+      foreach( $class_name::select( $qnaire_mod ) as $db_qnaire )
         $qnaire_list[ $db_qnaire->id ] = $db_qnaire->name;
 
-      $this->set_parameter(
-        'restrict_qnaire_id', key( $qnaire_list ), true, $qnaire_list );
+      $this->set_parameter( 'restrict_qnaire_id', key( $qnaire_list ), true, $qnaire_list );
+    }
+    else if( $this->restrictions[ 'phase' ] )
+    {
+      $phase_mod = lib::create( 'database\modifier' );
+      $phase_mod->order( 'rank' );
+      $phase_list = array();
+      $class_name = lib::get_class_name( 'database\phase' );
+      foreach( $class_name::select( $phase_mod ) as $db_phase )
+        $phase_list[ $db_phase->id ] = $db_phase->get_survey()->get_title();
+
+      $this->set_parameter( 'restrict_phase_id', key( $phase_list ), true, $phase_list );
     }
   }
 
@@ -80,6 +93,11 @@ abstract class base_report extends \cenozo\ui\widget\base_report
     {
       $this->restrictions[ 'qnaire' ] = true;
       $this->add_parameter( 'restrict_qnaire_id', 'enum', 'Questionnaire' );
+    }
+    else if( 'phase' == $restriction_type )
+    {
+      $this->restrictions[ 'phase' ] = true;
+      $this->add_parameter( 'restrict_phase_id', 'enum', 'Phase' );
     }
   }
 }
