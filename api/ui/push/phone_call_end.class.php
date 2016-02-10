@@ -58,16 +58,16 @@ class phone_call_end extends \cenozo\ui\push
         // if the participant has never had a contact attempt made then mark the event
         $db_interview = $db_phone_call->get_assignment()->get_interview();
         $db_participant = $db_interview->get_participant();
-        $db_event_type = $db_interview->get_qnaire()->get_first_attempt_event_type();
-        if( !is_null( $db_event_type ) )
+        $db_first_attempt_event_type = $db_interview->get_qnaire()->get_first_attempt_event_type();
+        if( !is_null( $db_first_attempt_event_type ) )
         {
           $event_mod = lib::create( 'database\modifier' );
-          $event_mod->where( 'event_type_id', '=', $db_event_type->id );
+          $event_mod->where( 'event_type_id', '=', $db_first_attempt_event_type->id );
           if( 0 == $db_participant->get_event_count( $event_mod ) )
           {
             $db_event = lib::create( 'database\event' );
             $db_event->participant_id = $db_participant->id;
-            $db_event->event_type_id = $db_event_type->id;
+            $db_event->event_type_id = $db_first_attempt_event_type->id;
             $db_event->datetime = util::get_datetime_object()->format( 'Y-m-d H:i:s' );
             $db_event->save();
           }
@@ -108,15 +108,16 @@ class phone_call_end extends \cenozo\ui\push
         { // if the participant has never been reached then add this event
           $db_interview = $db_phone_call->get_assignment()->get_interview();
           $db_participant = $db_interview->get_participant();
-          if( !is_null( $db_event_type ) )
+          $db_reached_event_type = $db_interview->get_qnaire()->get_reached_event_type();
+          if( !is_null( $db_reached_event_type ) )
           {
             $event_mod = lib::create( 'database\modifier' );
-            $event_mod->where( 'event_type_id', '=', $db_event_type->id );
+            $event_mod->where( 'event_type_id', '=', $db_reached_event_type->id );
             if( 0 == $db_participant->get_event_count( $event_mod ) )
             {
               $db_event = lib::create( 'database\event' );
               $db_event->participant_id = $db_participant->id;
-              $db_event->event_type_id = $db_event_type->id;
+              $db_event->event_type_id = $db_reached_event_type->id;
               $db_event->datetime = util::get_datetime_object()->format( 'Y-m-d H:i:s' );
               $db_event->save();
             }
