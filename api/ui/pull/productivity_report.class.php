@@ -85,9 +85,7 @@ class productivity_report extends \cenozo\ui\pull\base_report
 
     $db_qnaire = lib::create( 'database\qnaire', $this->get_argument( 'restrict_qnaire_id' ) );
     
-    $this->add_title( 
-      sprintf( 'Operator productivity for '.
-               'the %s interview', $db_qnaire->name ) ) ;
+    $this->add_title( 'Operator productivity' );
     
     // we define the min and max datetime objects here, they get set in the next foreach loop, then
     // used in the for loop below
@@ -100,30 +98,23 @@ class productivity_report extends \cenozo\ui\pull\base_report
       $contents = array();
       // start by determining the table contents
       $grand_total_time = 0;
-      $grand_total_completes = 0;
-      $grand_total_calls = 0;
+      $grand_total_completes = array();
       $user_list_mod = lib::create( 'database\modifier' );
       foreach( $user_class_name::select() as $db_user )
       {
-        // create modifiers for the activity, phone_call, interview and user_time queries
+        // create modifiers for the activity, interview and user_time queries
         $activity_mod = lib::create( 'database\modifier' );
         $activity_mod->where( 'activity.user_id', '=', $db_user->id );
         $activity_mod->where( 'activity.site_id', '=', $db_site->id );
         $activity_mod->where( 'activity.role_id', '=', $db_role->id );
         $activity_mod->where( 'operation.subject', '!=', 'self' );
-        $phone_call_mod = lib::create( 'database\modifier' );
         $interview_mod = lib::create( 'database\modifier' );
-        $interview_mod->where( 'completed', '=', true );
         
         if( $restrict_start_date && $restrict_end_date )
         {
           $activity_mod->where( 'datetime', '>=',
             $start_datetime_obj->format( 'Y-m-d' ).' 0:00:00' );
           $activity_mod->where( 'datetime', '<=',
-            $end_datetime_obj->format( 'Y-m-d' ).' 23:59:59' );
-          $phone_call_mod->where( 'assignment.start_datetime', '>=',
-            $start_datetime_obj->format( 'Y-m-d' ).' 0:00:00' );
-          $phone_call_mod->where( 'assignment.end_datetime', '<=',
             $end_datetime_obj->format( 'Y-m-d' ).' 23:59:59' );
           $interview_mod->where( 'assignment.start_datetime', '>=',
             $start_datetime_obj->format( 'Y-m-d' ).' 0:00:00' );
@@ -134,16 +125,12 @@ class productivity_report extends \cenozo\ui\pull\base_report
         {
           $activity_mod->where( 'datetime', '>=',
             $start_datetime_obj->format( 'Y-m-d' ).' 0:00:00' );
-          $phone_call_mod->where( 'assignment.start_datetime', '>=',
-            $start_datetime_obj->format( 'Y-m-d' ).' 0:00:00' );
           $interview_mod->where( 'assignment.start_datetime', '>=',
             $start_datetime_obj->format( 'Y-m-d' ).' 0:00:00' );
         }
         else if( !$restrict_start_date && $restrict_end_date )
         {
           $activity_mod->where( 'datetime', '<=',
-            $end_datetime_obj->format( 'Y-m-d' ).' 23:59:59' );
-          $phone_call_mod->where( 'assignment.start_datetime', '<=',
             $end_datetime_obj->format( 'Y-m-d' ).' 23:59:59' );
           $interview_mod->where( 'assignment.start_datetime', '<=',
             $end_datetime_obj->format( 'Y-m-d' ).' 23:59:59' );
@@ -152,12 +139,10 @@ class productivity_report extends \cenozo\ui\pull\base_report
         // if there is no activity then skip this user
         if( 0 == $activity_class_name::count( $activity_mod ) ) continue;
 
-        // Determine the number of phone calls, completed interviews and interview times
-        $calls = $db_user->get_phone_call_count( $db_qnaire, $phone_call_mod );
-        $interview_details =
-          $db_user->get_interview_count_and_time( $db_qnaire, $db_site, $interview_mod );
-        $completes = $interview_details['count'];
-        $interview_time = $interview_details['time'];
+        // Determine the number of completed interviews and interview times
+        $interview_details = $db_user->get_interview_count_and_time( $db_qnaire, $db_site, $interview_mod );
+        $count_list = $interview_details['count'];
+        $time_list = $interview_details['time'];
 
         // Determine the total time spent as an operator over the desired period
         $total_time = $user_time_class_name::get_sum(
@@ -168,6 +153,9 @@ class productivity_report extends \cenozo\ui\pull\base_report
 
         // Now we can use all the information gathered above to fill in the contents of the table.
         ///////////////////////////////////////////////////////////////////////////////////////////
+        $content = array( $db_user->name );
+        foreach( $count_list as $completes ) $content[] = $completes;
+
         if( $single_date )
         {
           $day_activity_mod = lib::create( 'database\modifier' );
@@ -183,76 +171,56 @@ class productivity_report extends \cenozo\ui\pull\base_report
           $min_datetime_obj = $activity_class_name::get_min_datetime( $day_activity_mod );
           $max_datetime_obj = $activity_class_name::get_max_datetime( $day_activity_mod );
 
-          $contents[] = array(
-            $db_user->name,
-            $completes,
-            is_null( $min_datetime_obj ) ? '??' : $min_datetime_obj->format( 'H:i' ),
-            is_null( $max_datetime_obj ) ? '??' : $max_datetime_obj->format( 'H:i' ),
-            sprintf( '%0.2f', $total_time ),
-            $total_time > 0 ? sprintf( '%0.2f', $completes / $total_time ) : '',
-            $completes  > 0 ? sprintf( '%0.2f', $interview_time / $completes / 60 ) : '',
-            $total_time > 0 ? sprintf( '%0.2f', $calls / $total_time ) : '' );
-        }
-        else
-        {
-          $contents[] = array(
-            $db_user->name,
-            $completes,
-            sprintf( '%0.2f', $total_time ),
-            $total_time > 0 ? sprintf( '%0.2f', $completes / $total_time ) : '',
-            $completes  > 0 ? sprintf( '%0.2f', $interview_time / $completes / 60 ) : '',
-            $total_time > 0 ? sprintf( '%0.2f', $calls / $total_time ) : '' );
+          $content[] = is_null( $min_datetime_obj ) ? '??' : $min_datetime_obj->format( 'H:i' );
+          $content[] = is_null( $max_datetime_obj ) ? '??' : $max_datetime_obj->format( 'H:i' );
         }
 
-        $grand_total_completes += $completes;
-        $grand_total_time      += $total_time;
-        $grand_total_calls     += $calls;
+        $content[] = sprintf( '%0.2f', $total_time );
+        foreach( $count_list as $completes )
+          $content[] = $total_time > 0 ? sprintf( '%0.2f', $completes / $total_time ) : '';
+        foreach( $count_list as $title => $completes )
+          $content[] = $completes  > 0 ? sprintf( '%0.2f', $time_list[$title] / $completes / 60 ) : '';
+
+        $contents[] = $content;
+
+        foreach( $count_list as $title => $completes )
+        {
+          if( !array_key_exists( $title, $grand_total_completes ) ) $grand_total_completes[$title] = 0;
+          $grand_total_completes[$title] += $count_list[$title];
+        }
+        $grand_total_time += $total_time;
       }
 
-      $average_callPH = $grand_total_time > 0 ? 
-        sprintf( '%0.2f', $grand_total_calls / $grand_total_time ) : 'N/A';
-      $average_compPH = $grand_total_time > 0 ? 
-        sprintf( '%0.2f', $grand_total_completes / $grand_total_time ) : 'N/A';
+      $average_compPH = array();
+      foreach( $grand_total_completes as $title => $completes )
+        $average_compPH[$title] = $grand_total_time[$title] > 0 ? 
+          sprintf( '%0.2f', $grand_total_completes / $grand_total_time[$title] ) : 'N/A';
+
+      $header = array( 'Operator' );
+      $footer = array( 'Total' );
+      foreach( $grand_total_completes as $title => $completes )
+      {
+        $header[] = $title;
+        $footer[] = 'sum()';
+      }
 
       if( $single_date )
       {
-        $header = array(
-          'Operator',
-          'Completes',
-          'Start Time',
-          'End Time',
-          'Total Time',
-          'CompPH',
-          'Avg. Length',
-          'CallPH' );
+        $header[] = 'Start Time';
+        $header[] = 'End Time';
 
-        $footer = array(
-          'Total',
-          'sum()',
-          '--',
-          '--',
-          'sum()',
-          $average_compPH,
-          'average()',
-          $average_callPH );
+        $footer[] = '--';
+        $footer[] = '--';
       }
-      else
-      {
-        $header = array(
-          'Operator',
-          'Completes',
-          'Total Time',
-          'CompPH',
-          'Avg. Length',
-          'CallPH' );
 
-        $footer = array(
-          'Total',
-          'sum()',
-          'sum()',
-          $average_compPH,
-          'average()',
-          $average_callPH );
+      $header[] = 'Total Time';
+      $footer[] = 'sum()';
+      foreach( $grand_total_completes as $title => $completes )
+      {
+        $header[] = $title.' CompPH';
+        $header[] = $title.' Avg. Length';
+        $footer[] = $average_compPH[$title];
+        $footer[] = 'average()';
       }
 
       $title = 0 == $restrict_site_id ? $db_site->name : NULL;

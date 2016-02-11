@@ -56,11 +56,14 @@ class user extends \cenozo\database\user
    */
   public function get_interview_count_and_time( $db_qnaire, $db_site, $modifier = NULL )
   {
+    $results = array( 'count' => array(), 'time' => array() );
+
     // check the primary key value
     if( is_null( $this->id ) )
     {
-      log::warning( 'Tried to query user with no id.' );
-      return 0;
+      throw lib::create( 'exception\runtime',
+        'Tried to get interview count and time for user with no id.',
+        __METHOD__ );
     }
 
     $survey_class_name = lib::get_class_name( 'database\limesurvey\survey' );
@@ -80,35 +83,50 @@ class user extends \cenozo\database\user
       $modifier->get_sql() );
 
     // determine the time for all interviews in the list
-    $time = 0;
-    if( 0 < count( $token_list ) )
-    {
-      $old_sid = $survey_class_name::get_sid();
+    $old_sid = $survey_class_name::get_sid();
 
-      // get the times for all interviews
-      $phase_mod = lib::create( 'database\modifier' );
-      $phase_mod->where( 'repeated', '=', false );
-      foreach( $db_qnaire->get_phase_list( $phase_mod ) as $db_phase )
+    // get the times for all interviews
+    $phase_mod = lib::create( 'database\modifier' );
+    $phase_mod->where( 'repeated', '=', false );
+    $phase_mod->order( 'rank' );
+    foreach( $db_qnaire->get_phase_list( $phase_mod ) as $db_phase )
+    {
+      $title = $db_phase->get_survey()->get_title();
+      if( !array_key_exists( $title, $results['count'] ) ) $results['count'][$title] = 0;
+      if( !array_key_exists( $title, $results['time'] ) ) $results['time'][$title] = 0;
+
+      if( 0 < count( $token_list ) )
       {
         // first try the phase's default sid
-        $survey_mod = lib::create( 'database\modifier' );
-        $survey_mod->where( 'token', 'IN', $token_list );
         $survey_class_name::set_sid( $db_phase->sid );
-        $time += $survey_class_name::get_total_time( $survey_mod );
+
+        $survey_count_mod = lib::create( 'database\modifier' );
+        $survey_count_mod->where( 'token', 'IN', $token_list );
+        $survey_count_mod->where( 'submitdate', '!=', NULL );
+        $results['count'][$title] += $survey_class_name::count( $survey_count_mod );
+
+        $survey_time_mod = lib::create( 'database\modifier' );
+        $survey_time_mod->where( 'token', 'IN', $token_list );
+        $results['time'][$title] += $survey_class_name::get_total_time( $survey_time_mod );
 
         // then go through each source-specifc sid
         foreach( $db_phase->get_source_survey_list() as $db_source_survey )
         {
-          $survey_mod = lib::create( 'database\modifier' );
-          $survey_mod->where( 'token', 'IN', $token_list );
           $survey_class_name::set_sid( $db_source_survey->sid );
-          $time += $survey_class_name::get_total_time( $survey_mod );
+
+          $survey_count_mod = lib::create( 'database\modifier' );
+          $survey_count_mod->where( 'token', 'IN', $token_list );
+          $results['count'][$title] += $survey_class_name::count( $survey_count_mod );
+
+          $survey_time_mod = lib::create( 'database\modifier' );
+          $survey_time_mod->where( 'token', 'IN', $token_list );
+          $results['time'][$title] += $survey_class_name::get_total_time( $survey_time_mod );
         }
       }
-
-      $survey_class_name::set_sid( $old_sid );
     }
 
-    return array( 'count' => count( $token_list ), 'time' => $time );
+    $survey_class_name::set_sid( $old_sid );
+
+    return $results;
   }
 }
