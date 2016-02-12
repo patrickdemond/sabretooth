@@ -218,8 +218,11 @@ class productivity_report extends \cenozo\ui\pull\base_report
       foreach( $grand_total_completes as $title => $completes )
       {
         $header[] = $title.' CompPH';
-        $header[] = $title.' Avg. Length';
         $footer[] = $average_compPH[$title];
+      }
+      foreach( $grand_total_completes as $title => $completes )
+      {
+        $header[] = $title.' Avg. Length';
         $footer[] = 'average()';
       }
 
