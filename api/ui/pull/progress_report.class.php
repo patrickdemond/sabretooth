@@ -129,11 +129,12 @@ class progress_report extends \cenozo\ui\pull\base_report
       $modifier = clone $base_mod;
       $modifier->where( 'participant_site.site_id', '=', $db_site->id );
       $sql = sprintf(
-        'SELECT uid, %s%s, appointment.datetime '.
+        'SELECT uid, %s%s, CONVERT_TZ( appointment.datetime, "UTC", "%s" ) '.
         'FROM participant '.
         '%s',
         $restrict_site_id ? 'IFNULL( state.name, "" ), ' : '',
         implode( ', ', $phase_selects ),
+        $db_site->timezone,
         $modifier->get_sql() );
 
       $contents = array();
