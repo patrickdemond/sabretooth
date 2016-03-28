@@ -76,11 +76,11 @@ class survey_timings extends sid_record
         'JOIN %sregion r ON a.region_id = r.id AND r.id = %s',
         static::get_table_name(),
         str_replace( '_timings', '', static::get_table_name() ),
-        $db->get_name(),
-        $db->get_prefix(),
-        $db->get_prefix(),
-        $db->get_prefix(),
-        $db->get_prefix(),
+        static::db()->get_name(),
+        static::db()->get_prefix(),
+        static::db()->get_prefix(),
+        static::db()->get_prefix(),
+        static::db()->get_prefix(),
         static::db()->format_string( $db_region->id ) );
     }
     else
