@@ -70,17 +70,13 @@ class survey_timings extends sid_record
       $sql .= sprintf( ' '.
         'FROM %s t '.
         'JOIN %s s ON t.id = s.id '.
-        'JOIN %s.%sinterview i ON s.token LIKE CONCAT( i.id, "_%%" ) '.
-        'JOIN %sparticipant_primary_address p ON i.participant_id = p.participant_id '.
-        'JOIN %saddress a ON p.address_id = a.id '.
-        'JOIN %sregion r ON a.region_id = r.id AND r.id = %s',
+        'JOIN %s.interview i ON s.token LIKE CONCAT( i.id, "_%%" ) '.
+        'JOIN participant_primary_address p ON i.participant_id = p.participant_id '.
+        'JOIN address a ON p.address_id = a.id '.
+        'JOIN region r ON a.region_id = r.id AND r.id = %s',
         static::get_table_name(),
         str_replace( '_timings', '', static::get_table_name() ),
-        static::db()->get_name(),
-        static::db()->get_prefix(),
-        static::db()->get_prefix(),
-        static::db()->get_prefix(),
-        static::db()->get_prefix(),
+        $db_region::db()->get_name(),
         static::db()->format_string( $db_region->id ) );
     }
     else
